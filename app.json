@@ -2,6 +2,7 @@
   "expo": {
     "name": "sahibak2",
     "slug": "sahibak2",
+    "scheme": "sahibak2",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -31,10 +32,15 @@
       "expo-router",
       "expo-font",
       "expo-image",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34
+          }
+        }
+      ],
       "expo-secure-store",
-      ["expo-build-properties", {
-  "android": { "compileSdkVersion": 34 }
-}],
       "expo-sharing"
     ],
     "extra": {

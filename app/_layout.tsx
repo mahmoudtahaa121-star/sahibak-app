@@ -16,7 +16,9 @@ export default function RootLayout() {
   })
 
   useEffect(() => {
-    I18nManager.forceRTL(true)
+    if (!I18nManager.isRTL) {
+      I18nManager.forceRTL(true)
+    }
   }, [])
 
   useEffect(() => {

@@ -2,8 +2,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Linking from 'expo-linking'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function MoreScreen() {
+  const { user, profile, signOut } = useAuth()
+
   const handleAbout = () => {
     Alert.alert(
       'عن التطبيق',
@@ -16,18 +19,63 @@ export default function MoreScreen() {
     Linking.openURL('https://wa.me/201000000000')
   }
 
+  const handleSignOut = () => {
+    Alert.alert(
+      'تسجيل الخروج',
+      'هل أنت متأكد من تسجيل الخروج؟',
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'نعم',
+          onPress: async () => {
+            await signOut()
+            router.replace('/')
+          },
+        },
+      ]
+    )
+  }
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'user':
+        return '👤 مقيم'
+      case 'provider':
+        return '🏪 صاحب خدمة'
+      case 'admin':
+        return '🔧 مدير'
+      default:
+        return ''
+    }
+  }
+
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Ionicons name="person" size={32} color="#ADB5BD" />
+      {user && profile ? (
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={32} color="#1B4332" />
+          </View>
+          <Text style={styles.userName}>{profile.full_name || 'مستخدم'}</Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleText}>{getRoleBadge(profile.role)}</Text>
+          </View>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <Text style={styles.signOutButtonText}>تسجيل الخروج</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.welcome}>مرحباً بك</Text>
-        <Text style={styles.subtitle}>سجّل دخولك للوصول لكل المميزات</Text>
-        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/auth/login')}>
-          <Text style={styles.loginButtonText}>تسجيل الدخول / إنشاء حساب</Text>
-        </TouchableOpacity>
-      </View>
+      ) : (
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={32} color="#ADB5BD" />
+          </View>
+          <Text style={styles.welcome}>مرحباً بك</Text>
+          <Text style={styles.subtitle}>سجّل دخولك للوصول لكل المميزات</Text>
+          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/auth/login')}>
+            <Text style={styles.loginButtonText}>تسجيل الدخول / إنشاء حساب</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)')}>
         <Ionicons name="location" size={24} color="#1B4332" />
@@ -87,6 +135,37 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6C757D',
     marginBottom: 16,
+  },
+  userName: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 18,
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  roleBadge: {
+    backgroundColor: '#D4A843',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  roleText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 12,
+    color: '#FFFFFF',
+  },
+  signOutButton: {
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  signOutButtonText: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 13,
+    color: '#1A1A1A',
   },
   loginButton: {
     backgroundColor: '#1B4332',

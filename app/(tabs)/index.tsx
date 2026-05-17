@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -39,9 +39,12 @@ export default function HomeScreen() {
 
   const activeOffersCount = offers?.length || 0
 
-  NetInfo.addEventListener((state) => {
-    setIsConnected(state.isConnected ?? true)
-  })
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected ?? true)
+    })
+    return () => unsubscribe()
+  }, [])
 
   const filteredPlaces = places?.filter((place: Place) => {
     if (searchQuery.length <= 1) return true

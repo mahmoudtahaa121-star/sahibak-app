@@ -34,7 +34,7 @@ export default function TabLayout() {
           title: 'العروض',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="pricetag-outline" size={size} color={color} />
-          ),
+          ), 
         }}
       />
       <Tabs.Screen

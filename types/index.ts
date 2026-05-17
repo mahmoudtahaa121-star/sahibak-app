@@ -65,7 +65,7 @@ export interface Offer {
   description_ar: string | null
   expires_at: string | null
   status: 'pending' | 'approved' | 'rejected'
-  place?: Pick<Place, 'id' | 'name_ar' | 'image_url'>
+  place?: Pick<Place, 'id' | 'name_ar' | 'image_url' | 'place_type'>
 }
 
 export interface AppConfig {

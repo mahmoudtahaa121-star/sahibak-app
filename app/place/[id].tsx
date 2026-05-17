@@ -13,7 +13,6 @@ import {
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
-import MapView, { Marker } from 'react-native-maps'
 import * as Linking from 'expo-linking'
 import * as Sharing from 'expo-sharing'
 import { supabase } from '../../lib/supabase'
@@ -88,7 +87,7 @@ export default function PlaceScreen() {
         { text: 'إلغاء', style: 'cancel' },
         {
           text: 'إرسال',
-          onPress: async (text) => {
+          onPress: async (text?: string) => {
             if (text && place) {
               await supabase.from('reports').insert({
                 place_id: place.id,
@@ -119,7 +118,7 @@ export default function PlaceScreen() {
     )
   }
 
-  const category = place.categories[0]
+  const category = place.categories?.[0]
   const placeTypeBadge = place.place_type === 'shop' ? '🏪 محل' : '👤 شخص'
 
   return (
@@ -160,25 +159,28 @@ export default function PlaceScreen() {
         </View>
 
         {place.latitude && place.longitude && (
-          <View style={styles.mapContainer}>
-            <MapView
-              style={styles.map}
-              initialRegion={{
-                latitude: place.latitude,
-                longitude: place.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-            >
-              <Marker
-                coordinate={{
-                  latitude: place.latitude,
-                  longitude: place.longitude,
-                }}
-                title={place.name_ar}
-              />
-            </MapView>
-          </View>
+          <TouchableOpacity
+            style={{
+              height: 160,
+              backgroundColor: '#F8F9FA',
+              borderRadius: 12,
+              marginHorizontal: 14,
+              marginBottom: 8,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: '#E9ECEF',
+            }}
+            onPress={() => {
+              const url = `https://maps.google.com/?q=${place.latitude},${place.longitude}`
+              Linking.openURL(url)
+            }}
+          >
+            <Text style={{ fontSize: 32, marginBottom: 8 }}>🗺</Text>
+            <Text style={{ fontFamily: 'Cairo', fontSize: 13, color: '#6C757D' }}>
+              افتح في خرائط جوجل
+            </Text>
+          </TouchableOpacity>
         )}
 
         <View style={styles.contactCard}>
@@ -209,7 +211,7 @@ export default function PlaceScreen() {
                     )}
                   </View>
                 </View>
-                {index < place.services.length - 1 && <View style={styles.divider} />}
+                {index < (place.services?.length ?? 0) - 1 && <View style={styles.divider} />}
               </View>
             ))}
           </View>
@@ -328,16 +330,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#3C3C43',
     lineHeight: 22,
-  },
-  mapContainer: {
-    height: 160,
-    marginHorizontal: 14,
-    marginBottom: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  map: {
-    flex: 1,
   },
   contactCard: {
     backgroundColor: '#FFFFFF',

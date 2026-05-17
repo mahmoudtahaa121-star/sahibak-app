@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 export function useArea() {
   const [selectedArea, setSelectedAreaState] = useState<string>(
-    storage.getString('selected_area') ?? 'المنصورية'
+    storage?.getString('selected_area') ?? 'المنصورية'
   )
   const [availableAreas, setAvailableAreas] = useState<string[]>(['المنصورية'])
 

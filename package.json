@@ -1,6 +1,7 @@
 {
-  "name": "sahibak2",
-  "version": "1.0.0",
+"name": "صاحبك",
+"slug": "sahibak",
+"scheme": "sahibak","version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",

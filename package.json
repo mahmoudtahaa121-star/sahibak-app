@@ -1,7 +1,7 @@
 {
   "name": "sahibak2",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -21,6 +21,7 @@
     "expo-linking": "~55.0.15",
     "expo-router": "~55.0.14",
     "expo-secure-store": "~55.0.14",
+    "expo-splash-screen": "~55.0.21",
     "expo-status-bar": "~55.0.6",
     "nativewind": "^4.2.4",
     "react": "19.2.0",
@@ -37,5 +38,8 @@
     "@types/react": "~19.2.2",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "scheme": "sahibak"
+  }
 }

@@ -42,6 +42,7 @@ export interface Place {
   longitude: number | null
   image_url: string | null
   status: 'pending' | 'approved' | 'rejected'
+  admin_note: string | null
   deleted_at: string | null
   created_at: string
   categories?: Category[]

@@ -262,9 +262,10 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>أماكن قريبة منك</Text>
-                <TouchableOpacity onPress={() => router.push('/places/all')}>
+                {/* TODO: Implement /places/all screen */}
+                {/* <TouchableOpacity onPress={() => router.push('/places/all')}>
                   <Text style={styles.seeAll}>الكل ›</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
 
               {placesLoading ? (

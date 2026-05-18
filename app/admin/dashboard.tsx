@@ -168,7 +168,7 @@ export default function AdminDashboardScreen() {
         { text: 'إلغاء', style: 'cancel' },
         {
           text: 'رفض',
-          onPress: async (reason) => {
+          onPress: async (reason?: string) => {
             if (!reason) {
               Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
               return
@@ -239,7 +239,7 @@ export default function AdminDashboardScreen() {
         { text: 'إلغاء', style: 'cancel' },
         {
           text: 'رفض',
-          onPress: async (reason) => {
+          onPress: async (reason?: string) => {
             if (!reason) {
               Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
               return

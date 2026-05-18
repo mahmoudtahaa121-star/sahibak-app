@@ -176,20 +176,12 @@ export default function ProviderDashboardScreen() {
                   </Text>
                 )}
 
-                {place.status === 'rejected' && place.address_text && (
+                {place.status === 'rejected' && place.admin_note && (
                   <View style={styles.noteContainer}>
                     <Text style={styles.noteLabel}>ملاحظة الإدارة:</Text>
-                    <Text style={styles.noteText}>{place.address_text}</Text>
+                    <Text style={styles.noteText}>{place.admin_note}</Text>
                   </View>
                 )}
-
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => router.push(`/provider/edit-place/${place.id}`)}
-                >
-                  <Ionicons name="create-outline" size={18} color="#1B4332" />
-                  <Text style={styles.editButtonText}>تعديل</Text>
-                </TouchableOpacity>
               </View>
             )
           })}

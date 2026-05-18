@@ -98,7 +98,7 @@ export default function MoreScreen() {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/')}>
           <Ionicons name="location" size={24} color="#1B4332" />
           <Text style={styles.menuLabel}>خدمات المنصورية</Text>
           <Ionicons name="chevron-back" size={20} color="#ADB5BD" />

@@ -14,11 +14,37 @@ import {
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
+import * as WebBrowser from 'expo-web-browser'
+import * as AuthSession from 'expo-auth-session'
+
+WebBrowser.maybeCompleteAuthSession()
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const ensureProfileExists = async (userId: string, email: string, fullName?: string) => {
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single()
+
+    if (!existingProfile) {
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: userId,
+        full_name: fullName || email.split('@')[0],
+        phone: '',
+        role: 'user',
+        is_banned: false,
+      })
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+      }
+    }
+  }
 
   const handleEmailLogin = async () => {
     if (!email.trim()) {
@@ -32,14 +58,15 @@ export default function LoginScreen() {
 
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       })
 
       if (error) {
         Alert.alert('خطأ في تسجيل الدخول', 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
-      } else {
+      } else if (data.user) {
+        await ensureProfileExists(data.user.id, data.user.email || '', data.user.user_metadata?.full_name)
         router.replace('/')
       }
     } catch (error) {
@@ -52,12 +79,38 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectUrl = AuthSession.makeRedirectUrl({
+        scheme: 'sahibak2',
+      })
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false,
+        },
       })
 
       if (error) {
         Alert.alert('خطأ', 'فشل تسجيل الدخول عبر جوجل')
+        setLoading(false)
+        return
+      }
+
+      if (data.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl)
+
+        if (result.type === 'success') {
+          const { data: sessionData } = await supabase.auth.getSession()
+          if (sessionData.session?.user) {
+            await ensureProfileExists(
+              sessionData.session.user.id,
+              sessionData.session.user.email || '',
+              sessionData.session.user.user_metadata?.full_name
+            )
+            router.replace('/')
+          }
+        }
       }
     } catch (error) {
       Alert.alert('خطأ', 'حدث خطأ غير متوقع')

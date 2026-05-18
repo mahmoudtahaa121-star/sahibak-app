@@ -25,71 +25,103 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleRegister = async () => {
-    if (!role) {
-      Alert.alert('خطأ', 'الرجاء اختيار نوع الحساب')
-      return
-    }
-    if (!fullName.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال الاسم الكامل')
-      return
-    }
-    if (!phone.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال رقم الهاتف')
-      return
-    }
-    if (!email.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني')
-      return
-    }
-    if (!password) {
-      Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور')
-      return
-    }
-    if (password.length < 6) {
-      Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل')
-      return
-    }
+const handleRegister = async () => {
+  if (!role) {
+    Alert.alert('خطأ', 'الرجاء اختيار نوع الحساب');
+    return;
+  }
+  if (!fullName.trim()) {
+    Alert.alert('خطأ', 'الرجاء إدخال الاسم الكامل');
+    return;
+  }
+  if (!phone.trim()) {
+    Alert.alert('خطأ', 'الرجاء إدخال رقم الهاتف');
+    return;
+  }
+  if (!email.trim()) {
+    Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
+    return;
+  }
+  if (!password) {
+    Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور');
+    return;
+  }
+  if (password.length < 6) {
+    Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+    return;
+  }
 
-    setLoading(true)
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+  setLoading(true);
+
+  try {
+    // 1️⃣ Sign Up with metadata to store role and phone temporarily
+    const { data: authData, error: authError } =
+      await supabase.auth.signUp({
         email: email.trim(),
         password,
-      })
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            phone: phone.trim(),
+            role,
+          },
+        },
+      });
 
-      if (authError) {
-        Alert.alert('خطأ', authError.message)
-        return
-      }
+    if (authError) {
+      Alert.alert('خطأ', authError.message);
+      return;
+    }
 
-      if (authData.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
+    const user = authData?.user;
+    const session = authData?.session;
+
+    if (!user) {
+      Alert.alert('خطأ', 'لم يتم إنشاء المستخدم');
+      return;
+    }
+
+    // 2️⃣ If session exists (email confirmation disabled), create profile immediately
+    if (session) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
           full_name: fullName.trim(),
           phone: phone.trim(),
           role,
           is_banned: false,
-        })
+        });
 
-        if (profileError) {
-          Alert.alert('خطأ', 'فشل إنشاء الملف الشخصي')
-          return
-        }
-
-        Alert.alert('نجاح', 'تم إنشاء الحساب! تحقق من بريدك', [
-          {
-            text: 'حسناً',
-            onPress: () => router.replace('/auth/login'),
-          },
-        ])
+      if (profileError) {
+        console.error('Profile insert error:', profileError);
+        Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${profileError.message}`);
+        return;
       }
-    } catch (error) {
-      Alert.alert('خطأ', 'حدث خطأ غير متوقع')
-    } finally {
-      setLoading(false)
+
+      Alert.alert('نجاح', 'تم إنشاء الحساب بنجاح!', [
+        {
+          text: 'حسناً',
+          onPress: () => router.replace('/'),
+        },
+      ]);
+    } else {
+      // 3️⃣ No session (email confirmation required) - profile will be created on first login
+      Alert.alert('نجاح', 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتأكيد التسجيل', [
+        {
+          text: 'حسناً',
+          onPress: () => router.replace('/auth/login'),
+        },
+      ]);
     }
+
+  } catch (error) {
+    console.error('Signup error:', error);
+    Alert.alert('خطأ', 'حدث خطأ غير متوقع');
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <KeyboardAvoidingView

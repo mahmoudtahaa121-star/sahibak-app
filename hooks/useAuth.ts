@@ -42,6 +42,9 @@ export function useAuth() {
 
     if (data && !error) {
       setProfile(data)
+    } else if (error) {
+      console.error('Profile fetch error:', error)
+      setProfile(null)
     }
   }
 

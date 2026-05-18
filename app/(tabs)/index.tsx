@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -26,18 +27,19 @@ import { Category, Place, News } from '../../types'
 
 export default function HomeScreen() {
   const { selectedArea, availableAreas, setSelectedArea } = useArea()
-  const { data: news, isLoading: newsLoading } = useNews()
-  const { data: categories, isLoading: categoriesLoading } = useParentCategories()
+  const { data: news, isLoading: newsLoading, refetch: refetchNews } = useNews()
+  const { data: categories, isLoading: categoriesLoading, refetch: refetchCategories } = useParentCategories()
   const { data: places, isLoading: placesLoading, error: placesError, refetch: refetchPlaces } = usePlaces(selectedArea)
-  const { data: offers } = useOffers(selectedArea)
+  const { data: offers, refetch: refetchOffers } = useOffers(selectedArea)
   const [isConnected, setIsConnected] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [showAreaModal, setShowAreaModal] = useState(false)
   const [showNewsModal, setShowNewsModal] = useState(false)
   const [selectedNews, setSelectedNews] = useState<News | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const activeOffersCount = offers?.length || 0
+  const activeOffersCount = useMemo(() => offers?.length || 0, [offers])
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -46,38 +48,56 @@ export default function HomeScreen() {
     return () => unsubscribe()
   }, [])
 
-  const filteredPlaces = places?.filter((place: Place) => {
-    if (searchQuery.length <= 1) return true
-    const query = searchQuery.toLowerCase()
-    return (
-      place.name_ar.includes(query) ||
-      place.services?.some((s) =>
-        s.name_ar.includes(query) || s.description_ar?.includes(query)
+  const filteredPlaces = useMemo(() => {
+    return places?.filter((place: Place) => {
+      if (searchQuery.length <= 1) return true
+      const query = searchQuery.toLowerCase()
+      return (
+        place.name_ar.includes(query) ||
+        place.services?.some((s) =>
+          s.name_ar.includes(query) || s.description_ar?.includes(query)
+        )
       )
-    )
-  }) || []
+    }) || []
+  }, [places, searchQuery])
 
-  const handleCategoryPress = (category: Category) => {
+  const handleCategoryPress = useCallback((category: Category) => {
     setSelectedCategory(category)
-  }
+  }, [])
 
-  const handleChildCategoryPress = (childId: number) => {
+  const handleChildCategoryPress = useCallback((childId: number) => {
     setSelectedCategory(null)
     router.push(`/category/${childId}`)
-  }
+  }, [])
 
-  const handlePlacePress = (placeId: string) => {
+  const handlePlacePress = useCallback((placeId: string) => {
     router.push(`/place/${placeId}`)
-  }
+  }, [])
 
-  const handleNewsPress = (newsItem: News) => {
+  const handleNewsPress = useCallback((newsItem: News) => {
     setSelectedNews(newsItem)
     setShowNewsModal(true)
-  }
+  }, [])
 
-  const handleOffersPress = () => {
+  const handleOffersPress = useCallback(() => {
     router.push('/offers')
-  }
+  }, [])
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await Promise.all([
+        refetchNews(),
+        refetchCategories(),
+        refetchPlaces(),
+        refetchOffers(),
+      ])
+    } catch (error) {
+      console.error('Refresh error:', error)
+    } finally {
+      setRefreshing(false)
+    }
+  }, [refetchNews, refetchCategories, refetchPlaces, refetchOffers])
 
   const isSearching = searchQuery.length > 1
 
@@ -108,6 +128,14 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#1B4332']}
+            tintColor="#1B4332"
+          />
+        }
       >
         <View style={styles.searchBar}>
           <Ionicons name="search" size={18} color="#D4A843" />
@@ -133,6 +161,36 @@ export default function HomeScreen() {
                 />
               ))
             )}
+          </View>
+        ) : !places || places.length === 0 ? (
+          <View style={styles.searchSuggestions}>
+            <Text style={styles.suggestionsTitle}>ابحث عن أي خدمة في المنصورية</Text>
+            <View style={styles.suggestionChips}>
+              <TouchableOpacity
+                style={styles.suggestionChip}
+                onPress={() => router.push('/category/1')}
+              >
+                <Text style={styles.suggestionChipText}>🍽️ مطاعم</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.suggestionChip}
+                onPress={() => router.push('/category/2')}
+              >
+                <Text style={styles.suggestionChipText}>👨‍⚕️ أطباء</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.suggestionChip}
+                onPress={() => router.push('/category/3')}
+              >
+                <Text style={styles.suggestionChipText}>🔧 سباكة</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.suggestionChip}
+                onPress={() => router.push('/category/4')}
+              >
+                <Text style={styles.suggestionChipText}>⚡ كهرباء</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
           <>
@@ -436,6 +494,35 @@ const styles = StyleSheet.create({
     color: '#6C757D',
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  searchSuggestions: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  suggestionsTitle: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 14,
+    color: '#6C757D',
+    marginBottom: 16,
+  },
+  suggestionChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  suggestionChip: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  suggestionChipText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 13,
+    color: '#1A1A1A',
   },
   section: {
     marginTop: 12,

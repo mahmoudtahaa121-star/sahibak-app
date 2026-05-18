@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import { useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Linking from 'expo-linking'
@@ -6,13 +7,10 @@ import { useAuth } from '../../hooks/useAuth'
 
 export default function MoreScreen() {
   const { user, profile, signOut } = useAuth()
+  const [showAboutModal, setShowAboutModal] = useState(false)
 
   const handleAbout = () => {
-    Alert.alert(
-      'عن التطبيق',
-      'صاحبك - دليل الخدمات المحلية\nالمنصورية، مصر\nالإصدار 1.0.0',
-      [{ text: 'حسناً' }]
-    )
+    setShowAboutModal(true)
   }
 
   const handleContact = () => {
@@ -123,6 +121,33 @@ export default function MoreScreen() {
         <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
       </TouchableOpacity>
     </ScrollView>
+
+    <Modal
+      visible={showAboutModal}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setShowAboutModal(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowAboutModal(false)}
+      >
+        <View style={styles.aboutModalContent}>
+          <Text style={styles.appName}>صاحبك</Text>
+          <Text style={styles.version}>الإصدار 1.0.0</Text>
+          <Text style={styles.description}>دليلك للخدمات المحلية في المنصورية</Text>
+          <Text style={styles.loveText}>تم التطوير بـ ❤️ للمنصورية</Text>
+          <TouchableOpacity
+            style={styles.closeModalButton}
+            onPress={() => setShowAboutModal(false)}
+          >
+            <Text style={styles.closeModalButtonText}>إغلاق</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  </View>
   )
 }
 
@@ -228,6 +253,56 @@ const styles = StyleSheet.create({
   },
   adminMenuLabel: {
     fontFamily: 'Cairo_700Bold',
+    color: '#FFFFFF',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  aboutModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    margin: 40,
+    gap: 12,
+  },
+  appName: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 32,
+    color: '#1B4332',
+    marginBottom: 4,
+  },
+  version: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 14,
+    color: '#6C757D',
+    marginBottom: 8,
+  },
+  description: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 15,
+    color: '#1A1A1A',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  loveText: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 14,
+    color: '#6C757D',
+  },
+  closeModalButton: {
+    backgroundColor: '#1B4332',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  closeModalButtonText: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 15,
     color: '#FFFFFF',
   },
 })

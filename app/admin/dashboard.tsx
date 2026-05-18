@@ -14,7 +14,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { Place, Offer, Profile } from '../../types'
 
-interface PendingPlace extends Place {
+interface PendingPlace extends Omit<Place, 'categories' | 'services'> {
   categories?: { category: { id: number; name_ar: string; icon: string | null } }[]
   services?: { name_ar: string; description_ar: string | null }[]
 }

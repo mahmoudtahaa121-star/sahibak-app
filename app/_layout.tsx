@@ -1,20 +1,37 @@
 import { useEffect, useState } from 'react'
 import { Slot, useSegments, useRouter } from 'expo-router'
-import { View, Text, StyleSheet, I18nManager } from 'react-native'
+import { View, Text, StyleSheet, I18nManager, ActivityIndicator } from 'react-native'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
 import { queryClient } from '../lib/queryClient'
 import { useAuth } from '../hooks/useAuth'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
-    Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
-    Cairo_700Bold: require('../assets/fonts/Cairo-Bold.ttf'),
-  })
+  const [fontsLoaded, setFontsLoaded] = useState(false)
+  const [fontError, setFontError] = useState(false)
+
+  useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        await useFonts({
+          Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
+          Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
+          Cairo_700Bold: require('../assets/fonts/Cairo-Bold.ttf'),
+        })
+        setFontsLoaded(true)
+      } catch (error) {
+        console.error('Font loading error:', error)
+        setFontError(true)
+        setFontsLoaded(true)
+      }
+    }
+
+    loadFonts()
+  }, [])
 
   useEffect(() => {
     if (!I18nManager.isRTL) {
@@ -54,9 +71,20 @@ export default function RootLayout() {
     }
   }, [user, loading, segments])
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1B4332" />
+        <Text style={styles.loadingText}>صاحبك</Text>
+      </View>
+    )
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
-      <Slot />
+      <ErrorBoundary>
+        <Slot />
+      </ErrorBoundary>
     </QueryClientProvider>
   )
 }
@@ -70,6 +98,19 @@ const styles = StyleSheet.create({
   },
   splashText: {
     fontSize: 32,
+    fontWeight: '700',
+    color: '#1B4332',
+    fontFamily: 'Cairo_700Bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 24,
     fontWeight: '700',
     color: '#1B4332',
     fontFamily: 'Cairo_700Bold',

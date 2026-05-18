@@ -6,21 +6,22 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  TextInput,
   Alert,
   ActivityIndicator,
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import * as Linking from 'expo-linking'
 import * as Sharing from 'expo-sharing'
 import { supabase } from '../../lib/supabase'
 import { Place, Offer } from '../../types'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function PlaceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const [reportReason, setReportReason] = useState('')
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
 
   const { data: place, isLoading, error } = useQuery({
     queryKey: ['place', id],
@@ -57,9 +58,24 @@ export default function PlaceScreen() {
     },
   })
 
+  const { data: isFavorite } = useQuery({
+    queryKey: ['favorite', id, user?.id],
+    queryFn: async () => {
+      if (!user) return false
+      const { data } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('place_id', id)
+        .single()
+      return !!data
+    },
+    enabled: !!user && !!id,
+  })
+
   const handleWhatsApp = () => {
     if (place?.whatsapp) {
-      Linking.openURL(`whatsapp://send?phone=${place.whatsapp}`)
+      Linking.openURL(`https://wa.me/2${place.whatsapp}`)
     }
   }
 
@@ -72,14 +88,40 @@ export default function PlaceScreen() {
   const handleShare = async () => {
     if (place) {
       try {
-        await Sharing.shareAsync(`${place.name_ar}\n${place.phone}`)
+        await Sharing.shareAsync(`${place.name_ar}\n${place.phone}\nعبر صاحبك`)
       } catch (error) {
         console.error('Share error:', error)
       }
     }
   }
 
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
+    if (isFavorite) {
+      await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('place_id', id)
+    } else {
+      await supabase
+        .from('favorites')
+        .insert({ user_id: user.id, place_id: id })
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['favorite', id, user?.id] })
+  }
+
   const handleReport = () => {
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
     Alert.prompt(
       'بلّغ عن خطأ',
       'اكتب سبب الإبلاغ',
@@ -129,7 +171,13 @@ export default function PlaceScreen() {
             <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{place.name_ar}</Text>
-          <View style={{ width: 24 }} />
+          <TouchableOpacity onPress={handleToggleFavorite}>
+            <Ionicons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={24}
+              color={isFavorite ? '#EF4444' : '#1A1A1A'}
+            />
+          </TouchableOpacity>
         </View>
 
         {place.image_url ? (

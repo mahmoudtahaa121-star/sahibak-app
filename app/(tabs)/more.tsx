@@ -77,6 +77,17 @@ export default function MoreScreen() {
         </View>
       )}
 
+      {profile?.role === 'provider' && (
+        <TouchableOpacity
+          style={[styles.menuItem, styles.providerMenuItem]}
+          onPress={() => router.push('/provider/dashboard')}
+        >
+          <Ionicons name="storefront" size={24} color="#D4A843" />
+          <Text style={[styles.menuLabel, styles.providerMenuLabel]}>لوحة المزود</Text>
+          <Ionicons name="chevron-back" size={20} color="#D4A843" />
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)')}>
         <Ionicons name="location" size={24} color="#1B4332" />
         <Text style={styles.menuLabel}>خدمات المنصورية</Text>
@@ -191,5 +202,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_400Regular',
     fontSize: 14,
     color: '#1A1A1A',
+  },
+  providerMenuItem: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#D4A843',
+    borderWidth: 1,
+  },
+  providerMenuLabel: {
+    fontFamily: 'Cairo_700Bold',
+    color: '#D4A843',
   },
 })

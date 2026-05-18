@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Slot, useSegments, useRouter } from 'expo-router'
 import { View, Text, StyleSheet, I18nManager, ActivityIndicator } from 'react-native'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -11,27 +11,15 @@ import ErrorBoundary from '../components/ErrorBoundary'
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const [fontsLoaded, setFontsLoaded] = useState(false)
-  const [fontError, setFontError] = useState(false)
+  const [fontsLoaded, fontError] = useFonts({
+    Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
+    Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
+    Cairo_700Bold: require('../assets/fonts/Cairo-Bold.ttf'),
+  })
 
-  useEffect(() => {
-    const loadFonts = async () => {
-      try {
-        await useFonts({
-          Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
-          Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
-          Cairo_700Bold: require('../assets/fonts/Cairo-Bold.ttf'),
-        })
-        setFontsLoaded(true)
-      } catch (error) {
-        console.error('Font loading error:', error)
-        setFontError(true)
-        setFontsLoaded(true)
-      }
-    }
-
-    loadFonts()
-  }, [])
+  const { user, loading } = useAuth()
+  const segments = useSegments()
+  const router = useRouter()
 
   useEffect(() => {
     if (!I18nManager.isRTL) {
@@ -45,17 +33,13 @@ export default function RootLayout() {
     }
   }, [fontsLoaded])
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return (
       <View style={styles.splashContainer}>
         <Text style={styles.splashText}>صاحبك</Text>
       </View>
     )
   }
-
-  const { user, loading } = useAuth()
-  const segments = useSegments()
-  const router = useRouter()
 
   useEffect(() => {
     if (loading) return

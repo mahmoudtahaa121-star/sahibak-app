@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -17,12 +17,14 @@ import { supabase } from '../../lib/supabase'
 import * as WebBrowser from 'expo-web-browser'
 import * as AuthSession from 'expo-auth-session'
 
-WebBrowser.maybeCompleteAuthSession()
-
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession()
+  }, [])
 
   const ensureProfileExists = async (userId: string, email: string, fullName?: string) => {
     const { data: existingProfile } = await supabase

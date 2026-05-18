@@ -48,106 +48,107 @@ export default function MoreScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {user && profile ? (
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={32} color="#1B4332" />
+    <View>
+      <ScrollView style={styles.container}>
+        {user && profile ? (
+          <View style={styles.profileCard}>
+            <View style={styles.avatar}>
+              <Ionicons name="person" size={32} color="#1B4332" />
+            </View>
+            <Text style={styles.userName}>{profile.full_name || 'مستخدم'}</Text>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleText}>{getRoleBadge(profile.role)}</Text>
+            </View>
+            <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+              <Text style={styles.signOutButtonText}>تسجيل الخروج</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>{profile.full_name || 'مستخدم'}</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{getRoleBadge(profile.role)}</Text>
+        ) : (
+          <View style={styles.profileCard}>
+            <View style={styles.avatar}>
+              <Ionicons name="person" size={32} color="#ADB5BD" />
+            </View>
+            <Text style={styles.welcome}>مرحباً بك</Text>
+            <Text style={styles.subtitle}>سجّل دخولك للوصول لكل المميزات</Text>
+            <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/auth/login')}>
+              <Text style={styles.loginButtonText}>تسجيل الدخول / إنشاء حساب</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-            <Text style={styles.signOutButtonText}>تسجيل الخروج</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={32} color="#ADB5BD" />
-          </View>
-          <Text style={styles.welcome}>مرحباً بك</Text>
-          <Text style={styles.subtitle}>سجّل دخولك للوصول لكل المميزات</Text>
-          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/auth/login')}>
-            <Text style={styles.loginButtonText}>تسجيل الدخول / إنشاء حساب</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
 
-      {profile?.role === 'admin' && (
-        <TouchableOpacity
-          style={[styles.menuItem, styles.adminMenuItem]}
-          onPress={() => router.push('/admin/dashboard')}
-        >
-          <Ionicons name="shield" size={24} color="#FFFFFF" />
-          <Text style={[styles.menuLabel, styles.adminMenuLabel]}>لوحة الإدارة</Text>
-          <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
-
-      {profile?.role === 'provider' && (
-        <TouchableOpacity
-          style={[styles.menuItem, styles.providerMenuItem]}
-          onPress={() => router.push('/provider/dashboard')}
-        >
-          <Ionicons name="storefront" size={24} color="#D4A843" />
-          <Text style={[styles.menuLabel, styles.providerMenuLabel]}>لوحة المزود</Text>
-          <Ionicons name="chevron-back" size={20} color="#D4A843" />
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)')}>
-        <Ionicons name="location" size={24} color="#1B4332" />
-        <Text style={styles.menuLabel}>خدمات المنصورية</Text>
-        <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/offers')}>
-        <Ionicons name="pricetag" size={24} color="#1B4332" />
-        <Text style={styles.menuLabel}>العروض</Text>
-        <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.menuItem} onPress={handleAbout}>
-        <Ionicons name="information-circle" size={24} color="#1B4332" />
-        <Text style={styles.menuLabel}>عن التطبيق</Text>
-        <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.menuItem} onPress={handleContact}>
-        <Ionicons name="call" size={24} color="#1B4332" />
-        <Text style={styles.menuLabel}>تواصل معنا</Text>
-        <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
-      </TouchableOpacity>
-    </ScrollView>
-
-    <Modal
-      visible={showAboutModal}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setShowAboutModal(false)}
-    >
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={() => setShowAboutModal(false)}
-      >
-        <View style={styles.aboutModalContent}>
-          <Text style={styles.appName}>صاحبك</Text>
-          <Text style={styles.version}>الإصدار 1.0.0</Text>
-          <Text style={styles.description}>دليلك للخدمات المحلية في المنصورية</Text>
-          <Text style={styles.loveText}>تم التطوير بـ ❤️ للمنصورية</Text>
+        {profile?.role === 'admin' && (
           <TouchableOpacity
-            style={styles.closeModalButton}
-            onPress={() => setShowAboutModal(false)}
+            style={[styles.menuItem, styles.adminMenuItem]}
+            onPress={() => router.push('/admin/dashboard')}
           >
-            <Text style={styles.closeModalButtonText}>إغلاق</Text>
+            <Ionicons name="shield" size={24} color="#FFFFFF" />
+            <Text style={[styles.menuLabel, styles.adminMenuLabel]}>لوحة الإدارة</Text>
+            <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  </View>
+        )}
+
+        {profile?.role === 'provider' && (
+          <TouchableOpacity
+            style={[styles.menuItem, styles.providerMenuItem]}
+            onPress={() => router.push('/provider/dashboard')}
+          >
+            <Ionicons name="storefront" size={24} color="#D4A843" />
+            <Text style={[styles.menuLabel, styles.providerMenuLabel]}>لوحة المزود</Text>
+            <Ionicons name="chevron-back" size={20} color="#D4A843" />
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)')}>
+          <Ionicons name="location" size={24} color="#1B4332" />
+          <Text style={styles.menuLabel}>خدمات المنصورية</Text>
+          <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/offers')}>
+          <Ionicons name="pricetag" size={24} color="#1B4332" />
+          <Text style={styles.menuLabel}>العروض</Text>
+          <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={handleAbout}>
+          <Ionicons name="information-circle" size={24} color="#1B4332" />
+          <Text style={styles.menuLabel}>عن التطبيق</Text>
+          <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem} onPress={handleContact}>
+          <Ionicons name="call" size={24} color="#1B4332" />
+          <Text style={styles.menuLabel}>تواصل معنا</Text>
+          <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
+        </TouchableOpacity>
+      </ScrollView>
+
+      <Modal
+        visible={showAboutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAboutModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowAboutModal(false)}
+        >
+          <View style={styles.aboutModalContent}>
+            <Text style={styles.appName}>صاحبك</Text>
+            <Text style={styles.version}>الإصدار 1.0.0</Text>
+            <Text style={styles.description}>دليلك للخدمات المحلية في المنصورية</Text>
+            <Text style={styles.loveText}>تم التطوير بـ ❤️ للمنصورية</Text>
+            <TouchableOpacity
+              style={styles.closeModalButton}
+              onPress={() => setShowAboutModal(false)}
+            >
+              <Text style={styles.closeModalButtonText}>إغلاق</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
   )
 }
 

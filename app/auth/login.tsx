@@ -79,7 +79,7 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     setLoading(true)
     try {
-      const redirectUrl = AuthSession.makeRedirectUrl({
+      const redirectUrl = AuthSession.makeRedirectUri({
         scheme: 'sahibak2',
       })
 

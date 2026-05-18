@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Slot } from 'expo-router'
+import { Slot, useSegments, useRouter } from 'expo-router'
 import { View, Text, StyleSheet, I18nManager } from 'react-native'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
 import { queryClient } from '../lib/queryClient'
+import { useAuth } from '../hooks/useAuth'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -34,6 +35,24 @@ export default function RootLayout() {
       </View>
     )
   }
+
+  const { user, loading } = useAuth()
+  const segments = useSegments()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (loading) return
+    
+    const inAuthGroup = segments[0] === 'auth'
+    const inProtectedGroup = 
+      segments[0] === 'provider' || segments[0] === 'admin'
+
+    if (user && inAuthGroup) {
+      router.replace('/')
+    } else if (!user && inProtectedGroup) {
+      router.replace('/auth/login')
+    }
+  }, [user, loading, segments])
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -77,6 +77,17 @@ export default function MoreScreen() {
         </View>
       )}
 
+      {profile?.role === 'admin' && (
+        <TouchableOpacity
+          style={[styles.menuItem, styles.adminMenuItem]}
+          onPress={() => router.push('/admin/dashboard')}
+        >
+          <Ionicons name="shield" size={24} color="#FFFFFF" />
+          <Text style={[styles.menuLabel, styles.adminMenuLabel]}>لوحة الإدارة</Text>
+          <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
+
       {profile?.role === 'provider' && (
         <TouchableOpacity
           style={[styles.menuItem, styles.providerMenuItem]}
@@ -211,5 +222,12 @@ const styles = StyleSheet.create({
   providerMenuLabel: {
     fontFamily: 'Cairo_700Bold',
     color: '#D4A843',
+  },
+  adminMenuItem: {
+    backgroundColor: '#1B4332',
+  },
+  adminMenuLabel: {
+    fontFamily: 'Cairo_700Bold',
+    color: '#FFFFFF',
   },
 })

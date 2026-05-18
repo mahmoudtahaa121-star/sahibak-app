@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -73,19 +73,19 @@ export default function PlaceScreen() {
     enabled: !!user && !!id,
   })
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = useCallback(() => {
     if (place?.whatsapp) {
       Linking.openURL(`https://wa.me/2${place.whatsapp}`)
     }
-  }
+  }, [place?.whatsapp])
 
-  const handleCall = () => {
+  const handleCall = useCallback(() => {
     if (place?.phone) {
       Linking.openURL(`tel:${place.phone}`)
     }
-  }
+  }, [place?.phone])
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     if (place) {
       try {
         await Sharing.shareAsync(`${place.name_ar}\n${place.phone}\nعبر صاحبك`)
@@ -93,9 +93,9 @@ export default function PlaceScreen() {
         console.error('Share error:', error)
       }
     }
-  }
+  }, [place])
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = useCallback(async () => {
     if (!user) {
       router.push('/auth/login')
       return
@@ -114,9 +114,9 @@ export default function PlaceScreen() {
     }
 
     queryClient.invalidateQueries({ queryKey: ['favorite', id, user?.id] })
-  }
+  }, [user, isFavorite, id, queryClient])
 
-  const handleReport = () => {
+  const handleReport = useCallback(() => {
     if (!user) {
       router.push('/auth/login')
       return
@@ -142,7 +142,7 @@ export default function PlaceScreen() {
       ],
       'plain-text'
     )
-  }
+  }, [user, place])
 
   if (isLoading) {
     return (

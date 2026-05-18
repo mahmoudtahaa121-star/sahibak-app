@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -13,22 +13,14 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { Place } from '../../types'
+import { getStatusBadge } from '../../utils/badges'
 
 export default function ProviderDashboardScreen() {
   const { user, profile, loading: authLoading } = useAuth()
   const [places, setPlaces] = useState<Place[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!authLoading && user && profile) {
-      if (profile.role !== 'provider') {
-        return
-      }
-      fetchPlaces()
-    }
-  }, [authLoading, user, profile])
-
-  const fetchPlaces = async () => {
+  const fetchPlaces = useCallback(async () => {
     if (!user) return
 
     const { data, error } = await supabase
@@ -43,7 +35,16 @@ export default function ProviderDashboardScreen() {
       setPlaces(data || [])
     }
     setLoading(false)
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!authLoading && user && profile) {
+      if (profile.role !== 'provider') {
+        return
+      }
+      fetchPlaces()
+    }
+  }, [authLoading, user, profile, fetchPlaces])
 
   if (authLoading) {
     return (
@@ -90,19 +91,6 @@ export default function ProviderDashboardScreen() {
   const totalPlaces = places.length
   const approvedPlaces = places.filter(p => p.status === 'approved').length
   const pendingPlaces = places.filter(p => p.status === 'pending').length
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { text: '⏳ قيد المراجعة', color: '#F59E0B', bg: '#FEF3C7' }
-      case 'approved':
-        return { text: '✓ معتمد', color: '#10B981', bg: '#D1FAE5' }
-      case 'rejected':
-        return { text: '✕ مرفوض', color: '#EF4444', bg: '#FEE2E2' }
-      default:
-        return { text: status, color: '#6C757D', bg: '#E9ECEF' }
-    }
-  }
 
   return (
     <ScrollView style={styles.container}>
@@ -182,6 +170,14 @@ export default function ProviderDashboardScreen() {
                     <Text style={styles.noteText}>{place.admin_note}</Text>
                   </View>
                 )}
+
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => router.push(`/provider/edit-place/${place.id}`)}
+                >
+                  <Ionicons name="create-outline" size={16} color="#1B4332" />
+                  <Text style={styles.editButtonText}>تعديل</Text>
+                </TouchableOpacity>
               </View>
             )
           })}

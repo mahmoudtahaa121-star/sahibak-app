@@ -1,23 +1,24 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Linking from 'expo-linking'
 import { useAuth } from '../../hooks/useAuth'
+import { getRoleBadge } from '../../utils/badges'
 
 export default function MoreScreen() {
   const { user, profile, signOut } = useAuth()
   const [showAboutModal, setShowAboutModal] = useState(false)
 
-  const handleAbout = () => {
+  const handleAbout = useCallback(() => {
     setShowAboutModal(true)
-  }
+  }, [])
 
-  const handleContact = () => {
+  const handleContact = useCallback(() => {
     Linking.openURL('https://wa.me/201000000000')
-  }
+  }, [])
 
-  const handleSignOut = () => {
+  const handleSignOut = useCallback(() => {
     Alert.alert(
       'تسجيل الخروج',
       'هل أنت متأكد من تسجيل الخروج؟',
@@ -32,23 +33,10 @@ export default function MoreScreen() {
         },
       ]
     )
-  }
-
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'user':
-        return '👤 مقيم'
-      case 'provider':
-        return '🏪 صاحب خدمة'
-      case 'admin':
-        return '🔧 مدير'
-      default:
-        return ''
-    }
-  }
+  }, [signOut])
 
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <ScrollView style={styles.container}>
         {user && profile ? (
           <View style={styles.profileCard}>
@@ -104,7 +92,7 @@ export default function MoreScreen() {
           <Ionicons name="chevron-back" size={20} color="#ADB5BD" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/offers')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/offers')}>
           <Ionicons name="pricetag" size={24} color="#1B4332" />
           <Text style={styles.menuLabel}>العروض</Text>
           <Ionicons name="chevron-back" size={20} color="#ADB5BD" />

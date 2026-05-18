@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -48,9 +48,9 @@ export default function AdminDashboardScreen() {
       }
       fetchData()
     }
-  }, [authLoading, user, profile])
+  }, [authLoading, user, profile, fetchData])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       await Promise.all([
@@ -65,9 +65,9 @@ export default function AdminDashboardScreen() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     const [approvedRes, pendingRes, usersRes, offersRes] = await Promise.all([
       supabase.from('places').select('id', { count: 'exact', head: true }).eq('status', 'approved').is('deleted_at', null),
       supabase.from('places').select('id', { count: 'exact', head: true }).eq('status', 'pending').is('deleted_at', null),
@@ -84,9 +84,9 @@ export default function AdminDashboardScreen() {
       totalProviders: providersRes.count || 0,
       activeOffers: offersRes.count || 0,
     })
-  }
+  }, [])
 
-  const fetchPendingPlaces = async () => {
+  const fetchPendingPlaces = useCallback(async () => {
     const { data, error } = await supabase
       .from('places')
       .select('*, place_categories(category:categories(*)), place_services(name_ar, description_ar)')
@@ -97,9 +97,9 @@ export default function AdminDashboardScreen() {
     if (data && !error) {
       setPendingPlaces(data as PendingPlace[])
     }
-  }
+  }, [])
 
-  const fetchPendingOffers = async () => {
+  const fetchPendingOffers = useCallback(async () => {
     const { data, error } = await supabase
       .from('offers')
       .select('*, place:places(id, name_ar, place_type)')
@@ -109,9 +109,9 @@ export default function AdminDashboardScreen() {
     if (data && !error) {
       setPendingOffers(data as PendingOffer[])
     }
-  }
+  }, [])
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     const { data, error } = await supabase
       .from('reports')
       .select('*, place:places(id, name_ar)')
@@ -120,9 +120,9 @@ export default function AdminDashboardScreen() {
     if (data && !error) {
       setReports(data)
     }
-  }
+  }, [])
 
-  const fetchProviders = async () => {
+  const fetchProviders = useCallback(async () => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -131,9 +131,9 @@ export default function AdminDashboardScreen() {
     if (data && !error) {
       setProviders(data)
     }
-  }
+  }, [])
 
-  const approvePlace = async (placeId: string) => {
+  const approvePlace = useCallback(async (placeId: string) => {
     setRefreshing(true)
     try {
       const { error } = await supabase
@@ -158,9 +158,9 @@ export default function AdminDashboardScreen() {
     } finally {
       setRefreshing(false)
     }
-  }
+  }, [user, fetchPendingPlaces, fetchStats])
 
-  const rejectPlace = async (placeId: string) => {
+  const rejectPlace = useCallback(async (placeId: string) => {
     Alert.prompt(
       'سبب الرفض',
       'أدخل سبب رفض المكان',
@@ -203,9 +203,9 @@ export default function AdminDashboardScreen() {
       ],
       'plain-text'
     )
-  }
+  }, [user, fetchPendingPlaces, fetchStats])
 
-  const approveOffer = async (offerId: string) => {
+  const approveOffer = useCallback(async (offerId: string) => {
     setRefreshing(true)
     try {
       const { error } = await supabase
@@ -229,9 +229,9 @@ export default function AdminDashboardScreen() {
     } finally {
       setRefreshing(false)
     }
-  }
+  }, [user, fetchPendingOffers])
 
-  const rejectOffer = async (offerId: string) => {
+  const rejectOffer = useCallback(async (offerId: string) => {
     Alert.prompt(
       'سبب الرفض',
       'أدخل سبب رفض العرض',
@@ -273,9 +273,9 @@ export default function AdminDashboardScreen() {
       ],
       'plain-text'
     )
-  }
+  }, [user, fetchPendingOffers])
 
-  const markReportReviewed = async (reportId: string) => {
+  const markReportReviewed = useCallback(async (reportId: string) => {
     setRefreshing(true)
     try {
       const { error } = await supabase
@@ -292,9 +292,9 @@ export default function AdminDashboardScreen() {
     } finally {
       setRefreshing(false)
     }
-  }
+  }, [fetchReports])
 
-  const toggleBan = async (providerId: string, currentStatus: boolean) => {
+  const toggleBan = useCallback(async (providerId: string, currentStatus: boolean) => {
     setRefreshing(true)
     try {
       const { error } = await supabase
@@ -311,9 +311,9 @@ export default function AdminDashboardScreen() {
     } finally {
       setRefreshing(false)
     }
-  }
+  }, [fetchProviders])
 
-  const getTimeAgo = (dateString: string) => {
+  const getTimeAgo = useCallback((dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
@@ -324,7 +324,7 @@ export default function AdminDashboardScreen() {
       return `منذ ${diffDays} يوم`
     }
     return `منذ ${diffHours} ساعة`
-  }
+  }, [])
 
   if (authLoading || loading) {
     return (

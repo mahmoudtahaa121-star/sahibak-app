@@ -33,19 +33,11 @@ export default function RootLayout() {
     }
   }, [fontsLoaded])
 
-  if (!fontsLoaded && !fontError) {
-    return (
-      <View style={styles.splashContainer}>
-        <Text style={styles.splashText}>صاحبك</Text>
-      </View>
-    )
-  }
-
   useEffect(() => {
     if (loading) return
-    
+
     const inAuthGroup = segments[0] === 'auth'
-    const inProtectedGroup = 
+    const inProtectedGroup =
       segments[0] === 'provider' || segments[0] === 'admin'
 
     if (user && inAuthGroup) {
@@ -54,6 +46,14 @@ export default function RootLayout() {
       router.replace('/auth/login')
     }
   }, [user, loading, segments])
+
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={styles.splashContainer}>
+        <Text style={styles.splashText}>صاحبك</Text>
+      </View>
+    )
+  }
 
   if (loading) {
     return (

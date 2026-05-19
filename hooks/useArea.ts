@@ -9,26 +9,45 @@ export function useArea() {
   const [availableAreas, setAvailableAreas] = useState<string[]>(['المنصورية'])
 
   useEffect(() => {
-    supabase
-      .from('app_config')
-      .select('value')
-      .eq('key', 'current_area')
-      .single()
-      .then(({ data }) => {
+    const fetchAreas = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_config')
+          .select('value')
+          .eq('key', 'current_area')
+          .single()
+
+        if (error) {
+          console.error('Fetch areas error:', error)
+          return
+        }
+
         if (data?.value) {
           const areas = data.value.split(',').map((a: string) => a.trim())
           setAvailableAreas(areas)
+
           if (!areas.includes(selectedArea)) {
-            setSelectedAreaState(areas[0])
-            storage.set('selected_area', areas[0])
+            const newArea = areas[0]
+            setSelectedAreaState(newArea)
+            if (storage) {
+              storage.set('selected_area', newArea)
+            }
           }
         }
-      })
+      } catch (err) {
+        console.error('Unexpected error:', err)
+      }
+    }
+
+    fetchAreas()
   }, [])
 
   const setSelectedArea = (area: string) => {
     setSelectedAreaState(area)
-    storage.set('selected_area', area)
+
+    if (storage) {
+      storage.set('selected_area', area)
+    }
   }
 
   return { selectedArea, availableAreas, setSelectedArea }

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { queryClient } from '../lib/queryClient'
+import { storage } from '../lib/storage'
 import { Profile } from '../types'
 
 export function useAuth() {
@@ -50,6 +52,8 @@ export function useAuth() {
 
   const signOut = async () => {
     await supabase.auth.signOut()
+    queryClient.clear()
+    storage?.clearAll()
   }
 
   return { user, profile, loading, signOut }

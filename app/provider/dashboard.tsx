@@ -93,7 +93,7 @@ export default function ProviderDashboardScreen() {
   const pendingPlaces = places.filter(p => p.status === 'pending').length
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingTop: insets.top }}>
       <View style={styles.header}>
         <Text style={styles.title}>لوحة المزود</Text>
         <Text style={styles.subtitle}>مرحباً، {profile.full_name}</Text>
@@ -375,5 +375,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     fontSize: 14,
     color: '#FFFFFF',
+  },
+})
   },
 })

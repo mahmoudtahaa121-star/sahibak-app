@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useArea } from '../../hooks/useArea'
 import { useOffers } from '../../hooks/useOffers'
@@ -6,12 +7,15 @@ import OfferCard from '../../components/offers/OfferCard'
 import Skeleton from '../../components/ui/Skeleton'
 
 export default function OffersScreen() {
+  const insets = useSafeAreaInsets()
   const { selectedArea } = useArea()
   const { data: offers, isLoading } = useOffers(selectedArea)
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🔥 عروض المنصورية</Text>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
+        <Text style={styles.headerText}>🔥 عروض المنصورية</Text>
+      </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {isLoading ? (
@@ -44,20 +48,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E9ECEF',
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  headerText: {
     fontFamily: 'Cairo_700Bold',
     fontSize: 20,
     color: '#1A1A1A',
-    padding: 16,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 14,
+    padding: 16,
     paddingTop: 0,
   },
   skeletonContainer: {
-    gap: 10,
+    gap: 12,
   },
   skeletonCard: {
     width: undefined,

@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useAuth } from '../../hooks/useAuth'
 import { useQuery } from '@tanstack/react-query'
@@ -7,6 +8,7 @@ import { Place } from '../../types'
 import { Ionicons } from '@expo/vector-icons'
 
 export default function FavoritesScreen() {
+  const insets = useSafeAreaInsets()
   const { user } = useAuth()
   const router = useRouter()
 
@@ -65,7 +67,7 @@ export default function FavoritesScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <Text style={styles.headerTitle}>مفضلاتي</Text>
       </View>
       <View style={styles.list}>
@@ -139,9 +141,15 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerTitle: {
     fontFamily: 'Cairo_700Bold',
@@ -149,8 +157,8 @@ const styles = StyleSheet.create({
     color: '#1B4332',
   },
   list: {
-    padding: 16,
-    gap: 12,
+    padding: 18,
+    gap: 14,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -158,6 +166,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#E9ECEF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row-reverse',

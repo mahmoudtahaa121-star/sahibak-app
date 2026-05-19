@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
@@ -18,6 +19,7 @@ import * as WebBrowser from 'expo-web-browser'
 import * as AuthSession from 'expo-auth-session'
 
 export default function LoginScreen() {
+  const insets = useSafeAreaInsets()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -126,7 +128,7 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}>
         <View style={styles.header}>
           <Text style={styles.logo}>صاحبك</Text>
           <Text style={styles.subtitle}>تسجيل الدخول</Text>
@@ -204,7 +206,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
   },
   logo: {
     fontFamily: 'Cairo_700Bold',
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
     color: '#6C757D',
   },
   form: {
-    gap: 16,
+    gap: 20,
   },
   inputContainer: {
     flexDirection: 'row-reverse',
@@ -228,7 +230,12 @@ const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputIcon: {
     marginLeft: 12,
@@ -241,9 +248,14 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: '#1B4332',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   primaryButtonText: {
     fontFamily: 'Cairo_700Bold',
@@ -257,9 +269,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E9ECEF',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   googleButtonText: {
     fontFamily: 'Cairo_600SemiBold',

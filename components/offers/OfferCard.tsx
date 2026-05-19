@@ -17,9 +17,14 @@ function formatDate(dateString: string | null): string {
 
 export default function OfferCard({ offer, onPress }: OfferCardProps) {
   const placeTypeBadge = offer.place?.place_type === 'shop' ? '🏪 محل' : '👤 شخص'
+  const isExpired = offer.expires_at && new Date(offer.expires_at) < new Date()
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, isExpired && styles.cardExpired]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.topRow}>
         {offer.place?.image_url ? (
           <Image source={{ uri: offer.place.image_url }} style={styles.placeImage} />
@@ -34,8 +39,8 @@ export default function OfferCard({ offer, onPress }: OfferCardProps) {
             <Text style={styles.badgeText}>{placeTypeBadge}</Text>
           </View>
         </View>
-        <View style={styles.activeBadge}>
-          <Text style={styles.activeBadgeText}>🔥 نشط</Text>
+        <View style={[styles.activeBadge, isExpired && styles.expiredBadge]}>
+          <Text style={styles.activeBadgeText}>{isExpired ? 'منتهي' : '🔥 نشط'}</Text>
         </View>
       </View>
 
@@ -56,6 +61,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 12,
     marginBottom: 10,
+  },
+  cardExpired: {
+    opacity: 0.6,
   },
   topRow: {
     flexDirection: 'row-reverse',
@@ -105,6 +113,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
+  },
+  expiredBadge: {
+    backgroundColor: '#6C757D',
   },
   activeBadgeText: {
     fontFamily: 'Cairo_700Bold',

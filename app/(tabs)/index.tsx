@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import NetInfo from '@react-native-community/netinfo'
@@ -26,6 +27,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { Category, Place, News } from '../../types'
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets()
   const { selectedArea, availableAreas, setSelectedArea } = useArea()
   const { data: news, isLoading: newsLoading, refetch: refetchNews } = useNews()
   const { data: categories, isLoading: categoriesLoading, refetch: refetchCategories } = useParentCategories()
@@ -109,7 +111,7 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <Text style={styles.headerTitle}>صاحبك</Text>
         {availableAreas.length === 1 ? (
           <Text style={styles.areaText}>{selectedArea}</Text>
@@ -444,8 +446,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerTitle: {
     fontFamily: 'Cairo_700Bold',
@@ -476,8 +484,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     paddingHorizontal: 16,
-    margin: 12,
+    margin: 16,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   searchInput: {
     flex: 1,
@@ -486,8 +499,8 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   searchResults: {
-    paddingHorizontal: 14,
-    gap: 8,
+    paddingHorizontal: 16,
+    gap: 12,
   },
   noResults: {
     fontFamily: 'Cairo_400Regular',
@@ -526,20 +539,21 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   section: {
-    marginTop: 12,
+    marginTop: 20,
+    paddingBottom: 8,
   },
   sectionHeader: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     marginBottom: 4,
   },
   sectionTitle: {
     fontFamily: 'Cairo_700Bold',
     fontSize: 15,
     color: '#1A1A1A',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     marginBottom: 4,
   },
   seeAll: {
@@ -549,16 +563,16 @@ const styles = StyleSheet.create({
   },
   newsScroll: {
     gap: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
   categoriesSkeleton: {
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
   categoriesScroll: {
     gap: 8,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
   categoryCard: {
     backgroundColor: '#FFFFFF',
@@ -566,9 +580,14 @@ const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
     borderRadius: 12,
     width: 72,
-    padding: 12,
+    padding: 14,
     alignItems: 'center',
     gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   categoryIcon: {
     fontSize: 26,
@@ -582,12 +601,17 @@ const styles = StyleSheet.create({
   offersBanner: {
     backgroundColor: '#D4A843',
     borderRadius: 14,
-    padding: 14,
+    padding: 16,
     paddingHorizontal: 16,
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   offersText: {
     fontFamily: 'Cairo_700Bold',
@@ -606,8 +630,8 @@ const styles = StyleSheet.create({
     color: '#1B4332',
   },
   placesSkeleton: {
-    gap: 8,
-    paddingHorizontal: 14,
+    gap: 12,
+    paddingHorizontal: 16,
   },
   skeletonCard: {
     width: undefined,
@@ -654,8 +678,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   placesList: {
-    gap: 8,
-    paddingHorizontal: 14,
+    gap: 12,
+    paddingHorizontal: 16,
   },
   modalOverlay: {
     flex: 1,

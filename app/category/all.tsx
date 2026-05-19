@@ -24,7 +24,7 @@ export default function AllCategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
         </TouchableOpacity>
@@ -136,5 +136,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: 20,
+  },
+})
   },
 })

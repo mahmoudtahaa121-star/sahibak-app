@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Linking from 'expo-linking'
@@ -7,6 +8,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { getRoleBadge } from '../../utils/badges'
 
 export default function MoreScreen() {
+  const insets = useSafeAreaInsets()
   const { user, profile, signOut } = useAuth()
   const [showAboutModal, setShowAboutModal] = useState(false)
 
@@ -28,7 +30,7 @@ export default function MoreScreen() {
           text: 'نعم',
           onPress: async () => {
             await signOut()
-            router.replace('/')
+            router.replace('/auth/login')
           },
         },
       ]
@@ -37,7 +39,7 @@ export default function MoreScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingTop: insets.top }}>
         {user && profile ? (
           <View style={styles.profileCard}>
             <View style={styles.avatar}>

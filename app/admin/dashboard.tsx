@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
@@ -24,6 +25,7 @@ interface PendingOffer extends Offer {
 }
 
 export default function AdminDashboardScreen() {
+  const insets = useSafeAreaInsets()
   const { user, profile, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -39,16 +41,6 @@ export default function AdminDashboardScreen() {
   const [pendingOffers, setPendingOffers] = useState<PendingOffer[]>([])
   const [reports, setReports] = useState<any[]>([])
   const [providers, setProviders] = useState<Profile[]>([])
-
-  useEffect(() => {
-    if (!authLoading && user && profile) {
-      if (profile.role !== 'admin') {
-        router.replace('/')
-        return
-      }
-      fetchData()
-    }
-  }, [authLoading, user, profile, fetchData])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -66,6 +58,18 @@ export default function AdminDashboardScreen() {
       setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (!authLoading && user && profile) {
+      if (profile.role !== 'admin') {
+        router.replace('/')
+        return
+      }
+      fetchData()
+    }
+  }, [authLoading, user, profile, fetchData])
+
+
 
   const fetchStats = useCallback(async () => {
     const [approvedRes, pendingRes, usersRes, offersRes] = await Promise.all([
@@ -333,7 +337,7 @@ export default function AdminDashboardScreen() {
       </View>
     )
   }
-
+ contentContainerStyle={{ paddingTop: insets.top }}
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>

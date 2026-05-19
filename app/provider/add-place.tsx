@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
@@ -27,12 +28,13 @@ interface Service {
 }
 
 export default function AddPlaceScreen() {
-  const { user } = useAuth()
+  const insets = useSafeAreaInsets()
+  const { user, profile } = useAuth()
   const [step, setStep] = useState<Step>(1)
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedParent, setSelectedParent] = useState<Category | null>(null)
-  
+
   const [placeType, setPlaceType] = useState<PlaceType | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
   const [nameAr, setNameAr] = useState('')
@@ -47,6 +49,11 @@ export default function AddPlaceScreen() {
   useEffect(() => {
     fetchCategories()
   }, [])
+
+  if (profile && profile.role !== 'provider' && profile.role !== 'admin') {
+    router.replace('/')
+    return null
+  }
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -408,7 +415,7 @@ export default function AddPlaceScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Pla[tform.OS === , { paddingTop: insets.top }]'ios' ? 'padding' : 'height'}
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -446,7 +453,7 @@ export default function AddPlaceScreen() {
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
         {step === 4 && renderStep4()}
-      </ScrollView>
+      </ScrollView>[, { paddingBottom: insets.bottom + 16 }]
 
       <View style={styles.footer}>
         <TouchableOpacity

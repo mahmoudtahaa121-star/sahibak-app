@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, I18nManager, ActivityIndicator } from 'react-na
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { queryClient } from '../lib/queryClient'
 import { useAuth } from '../hooks/useAuth'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -65,11 +66,13 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <Slot />
-      </ErrorBoundary>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <Slot />
+        </ErrorBoundary>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   )
 }
 

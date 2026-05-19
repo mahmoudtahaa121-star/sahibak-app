@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -19,6 +20,7 @@ import { Place, Offer } from '../../types'
 import { useAuth } from '../../hooks/useAuth'
 
 export default function PlaceScreen() {
+  const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -166,7 +168,7 @@ export default function PlaceScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
           </TouchableOpacity>

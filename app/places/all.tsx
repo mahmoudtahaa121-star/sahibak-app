@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
@@ -18,6 +19,7 @@ import PlaceCard from '../../components/place/PlaceCard'
 type FilterType = 'all' | 'shop' | 'person'
 
 export default function AllPlacesScreen() {
+  const insets = useSafeAreaInsets()
   const { selectedArea } = useArea()
   const [filter, setFilter] = useState<FilterType>('all')
 
@@ -47,7 +49,7 @@ export default function AllPlacesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
         </TouchableOpacity>

@@ -18,8 +18,8 @@ import { Place, Offer, Profile } from '../../types'
 import Skeleton from '../../components/ui/Skeleton'
 
 interface PendingPlace extends Omit<Place, 'categories' | 'services'> {
-  categories?: { category: { id: number; name_ar: string; icon: string | null } }[]
-  services?: { name_ar: string; description_ar: string | null }[]
+  place_categories?: { category: { id: number; name_ar: string; icon: string | null } }[]
+  place_services?: { name_ar: string; description_ar: string | null }[]
 }
 
 interface PendingOffer extends Offer {
@@ -538,8 +538,8 @@ export default function AdminDashboardScreen() {
           </View>
         ) : (
           pendingPlaces.map((place) => {
-            const category = place.categories?.[0]?.category
-            const services = place.services || []
+            const category = place.place_categories?.[0]?.category
+            const services = place.place_services || []
 
             return (
               <View key={place.id} style={styles.card}>
@@ -1066,3 +1066,4 @@ const styles = StyleSheet.create({
     height: 20,
   },
 })
+

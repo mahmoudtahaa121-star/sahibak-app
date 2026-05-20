@@ -47,7 +47,6 @@ export interface Place {
   created_at: string
   categories?: Category[]
   services?: PlaceService[]
-  likes_count?: number
 }
 
 export interface News {
@@ -74,3 +73,4 @@ export interface AppConfig {
   key: string
   value: string
 }
+

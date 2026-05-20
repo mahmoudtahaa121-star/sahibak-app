@@ -164,21 +164,6 @@ export default function HomeScreen() {
               ))
             )}
           </View>
-        ) : !places || places.length === 0 ? (
-          <View style={styles.searchSuggestions}>
-            <Text style={styles.suggestionsTitle}>ابحث عن أي خدمة في المنصورية</Text>
-            <View style={styles.suggestionChips}>
-              {categories?.slice(0, 4).map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={styles.suggestionChip}
-                  onPress={() => router.push(`/category/${category.id}`)}
-                >
-                  <Text style={styles.suggestionChipText}>{category.icon} {category.name_ar}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
         ) : (
           <>
             {news && news.length > 0 && (
@@ -249,10 +234,6 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>أماكن قريبة منك</Text>
-                {/* TODO: Implement /places/all screen */}
-                {/* <TouchableOpacity onPress={() => router.push('/places/all')}>
-                  <Text style={styles.seeAll}>الكل ›</Text>
-                </TouchableOpacity> */}
               </View>
 
               {placesLoading ? (
@@ -268,7 +249,7 @@ export default function HomeScreen() {
                     <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
                   </TouchableOpacity>
                 </View>
-              ) : places && places.length === 0 ? (
+              ) : !places || places.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyEmoji}>🏘</Text>
                   <Text style={styles.emptyTitle}>لا توجد خدمات بعد</Text>
@@ -278,7 +259,7 @@ export default function HomeScreen() {
                 </View>
               ) : (
                 <View style={styles.placesList}>
-                  {places?.map((place) => (
+                  {places.map((place) => (
                     <PlaceCard
                       key={place.id}
                       place={place}

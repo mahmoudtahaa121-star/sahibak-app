@@ -9,6 +9,7 @@ export function useNews() {
       const { data, error } = await supabase
         .from('news')
         .select('*')
+        .is('deleted_at', null)
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -16,4 +17,3 @@ export function useNews() {
     },
   })
 }
-

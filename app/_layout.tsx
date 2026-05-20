@@ -11,28 +11,10 @@ import ErrorBoundary from '../components/ErrorBoundary'
 
 SplashScreen.preventAutoHideAsync()
 
-export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
-    Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
-    Cairo_700Bold: require('../assets/fonts/Cairo-Bold.ttf'),
-  })
-
+function AuthGate() {
   const { user, loading } = useAuth()
   const segments = useSegments()
   const router = useRouter()
-
-  useEffect(() => {
-    if (!I18nManager.isRTL) {
-      I18nManager.forceRTL(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync()
-    }
-  }, [fontsLoaded])
 
   useEffect(() => {
     if (loading) return
@@ -48,28 +30,39 @@ export default function RootLayout() {
     }
   }, [user, loading, segments])
 
-  if (!fontsLoaded && !fontError) {
-    return (
-      <View style={styles.splashContainer}>
-        <Text style={styles.splashText}>صاحبك</Text>
-      </View>
-    )
-  }
+  return <Slot />
+}
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1B4332" />
-        <Text style={styles.loadingText}>صاحبك</Text>
-      </View>
-    )
-  }
+export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
+    Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
+    Cairo_700Bold: require('../assets/fonts/Cairo-Bold.ttf'),
+  })
+
+  useEffect(() => {
+    if (!I18nManager.isRTL) {
+      I18nManager.forceRTL(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync()
+    }
+  }, [fontsLoaded, fontError])
 
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <ErrorBoundary>
-          <Slot />
+          {!fontsLoaded && !fontError ? (
+            <View style={styles.splashContainer}>
+              <Text style={styles.splashText}>صاحبك</Text>
+            </View>
+          ) : (
+            <AuthGate />
+          )}
         </ErrorBoundary>
       </QueryClientProvider>
     </SafeAreaProvider>
@@ -87,19 +80,5 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '700',
     color: '#1B4332',
-    fontFamily: 'Cairo_700Bold',
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1B4332',
-    fontFamily: 'Cairo_700Bold',
   },
 })

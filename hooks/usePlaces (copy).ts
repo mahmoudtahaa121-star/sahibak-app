@@ -15,7 +15,8 @@ export function usePlaces(area: string) {
           ),
           services:place_services(
             id, name_ar, description_ar, sort_order
-          )
+          ),
+          likes_count
         `)
         .eq('status', 'approved')
         .is('deleted_at', null)
@@ -27,6 +28,7 @@ export function usePlaces(area: string) {
         ...p,
         categories: p.categories?.map((c: any) => c.category) ?? [],
         services: p.services ?? [],
+        likes_count: p.likes_count ?? 0,
       }))
     },
   })

@@ -15,15 +15,8 @@ export function useProviderPlaces(userId: string | undefined) {
         .is('deleted_at', null)
 
       if (error) throw error
-
-      return (data || []).map((place: any) => ({
-        ...place,
-        categories: place.place_categories
-          ?.map((pc: any) => pc.category)
-          .filter(Boolean) || [],
-      })) as Place[]
+      return data || []
     },
     enabled: !!userId,
   })
 }
-

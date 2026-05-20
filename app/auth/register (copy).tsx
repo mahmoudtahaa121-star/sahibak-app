@@ -83,18 +83,17 @@ const handleRegister = async () => {
       return;
     }
 
-    // 2️⃣ If session exists (email confirmation disabled), upsert profile
-    // (handle_new_user trigger may have already created it — upsert is safe either way)
+    // 2️⃣ If session exists (email confirmation disabled), create profile immediately
     if (session) {
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
+        .insert({
           id: user.id,
           full_name: fullName.trim(),
           phone: phone.trim(),
           role,
           is_banned: false,
-        }, { onConflict: 'id' });
+        });
 
       if (profileError) {
         Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${profileError.message}`);
@@ -357,5 +356,4 @@ const styles = StyleSheet.create({
     color: '#1B4332',
   },
 })
-
 

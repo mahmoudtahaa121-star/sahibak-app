@@ -14,12 +14,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import Constants from 'expo-constants'
 import { supabase } from '../../lib/supabase'
 import * as WebBrowser from 'expo-web-browser'
 import * as AuthSession from 'expo-auth-session'
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets()
+  const scheme = Constants.expoConfig?.scheme ?? 'sahibak'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -45,7 +47,7 @@ export default function LoginScreen() {
       })
 
       if (profileError) {
-        console.error('Profile creation error:', profileError)
+        // Profile creation failed - will be handled on next login
       }
     }
   }
@@ -84,7 +86,7 @@ export default function LoginScreen() {
     setLoading(true)
     try {
       const redirectUrl = AuthSession.makeRedirectUri({
-        scheme: 'sahibak2',
+        scheme: typeof scheme === 'string' ? scheme : 'sahibak',
       })
 
       const { data, error } = await supabase.auth.signInWithOAuth({

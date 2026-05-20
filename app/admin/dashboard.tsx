@@ -53,7 +53,7 @@ export default function AdminDashboardScreen() {
         fetchProviders(),
       ])
     } catch (error) {
-      console.error('Error fetching data:', error)
+      // Error fetching data - will show empty state
     } finally {
       setLoading(false)
     }
@@ -337,9 +337,8 @@ export default function AdminDashboardScreen() {
       </View>
     )
   }
- contentContainerStyle={{ paddingTop: insets.top }}
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}  contentContainerStyle={{ paddingTop: insets.top }}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>لوحة الإدارة</Text>
         <Text style={styles.headerSubtitle}>مرحباً، {profile?.full_name}</Text>

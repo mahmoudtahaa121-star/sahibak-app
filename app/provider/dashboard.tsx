@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -6,45 +5,19 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
-import { supabase } from '../../lib/supabase'
 import { Place } from '../../types'
 import { getStatusBadge } from '../../utils/badges'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useProviderPlaces } from '../../hooks/useProviderPlaces'
 
 export default function ProviderDashboardScreen() {
+  const insets = useSafeAreaInsets()
   const { user, profile, loading: authLoading } = useAuth()
-  const [places, setPlaces] = useState<Place[]>([])
-  const [loading, setLoading] = useState(true)
-
-  const fetchPlaces = useCallback(async () => {
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('places')
-      .select('*, place_categories(category:categories(*))')
-      .eq('provider_id', user.id)
-      .is('deleted_at', null)
-
-    if (error) {
-      Alert.alert('خطأ', 'فشل تحميل الأماكن')
-    } else {
-      setPlaces(data || [])
-    }
-    setLoading(false)
-  }, [user])
-
-  useEffect(() => {
-    if (!authLoading && user && profile) {
-      if (profile.role !== 'provider') {
-        return
-      }
-      fetchPlaces()
-    }
-  }, [authLoading, user, profile, fetchPlaces])
+  const { data: places, isLoading } = useProviderPlaces(user?.id)
 
   if (authLoading) {
     return (
@@ -88,9 +61,9 @@ export default function ProviderDashboardScreen() {
     )
   }
 
-  const totalPlaces = places.length
-  const approvedPlaces = places.filter(p => p.status === 'approved').length
-  const pendingPlaces = places.filter(p => p.status === 'pending').length
+  const totalPlaces = places?.length || 0
+  const approvedPlaces = places?.filter((p: Place) => p.status === 'approved').length || 0
+  const pendingPlaces = places?.filter((p: Place) => p.status === 'pending').length || 0
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingTop: insets.top }}>
@@ -126,11 +99,11 @@ export default function ProviderDashboardScreen() {
         <Text style={styles.placesTitle}>أماكني</Text>
       </View>
 
-      {loading ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator color="#1B4332" />
         </View>
-      ) : places.length === 0 ? (
+      ) : !places || places.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="storefront-outline" size={64} color="#ADB5BD" />
           <Text style={styles.emptyText}>لم تضف أي مكان بعد</Text>
@@ -143,10 +116,9 @@ export default function ProviderDashboardScreen() {
         </View>
       ) : (
         <View style={styles.placesList}>
-          {places.map((place) => {
+          {places?.map((place: Place) => {
             const badge = getStatusBadge(place.status)
             const category = place.categories?.[0]
-
             return (
               <View key={place.id} style={styles.placeCard}>
                 <View style={styles.placeHeader}>
@@ -375,7 +347,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     fontSize: 14,
     color: '#FFFFFF',
-  },
-})
   },
 })

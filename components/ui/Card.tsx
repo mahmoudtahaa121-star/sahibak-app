@@ -1,9 +1,9 @@
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native'
 
 interface CardProps {
   children: React.ReactNode
   onPress?: () => void
-  style?: any
+  style?: StyleProp<ViewStyle>
 }
 
 export default function Card({ children, onPress, style }: CardProps) {

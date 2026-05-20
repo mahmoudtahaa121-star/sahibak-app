@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, StyleProp, ViewStyle, TextStyle } from 'react-native'
 
 type ButtonVariant = 'primary' | 'outline' | 'danger'
 
@@ -19,8 +19,8 @@ export default function Button({
   disabled = false,
   fullWidth = false,
 }: ButtonProps) {
-  const getButtonStyle = (): any => {
-    const style: any = { ...styles.button }
+  const getButtonStyle = (): ViewStyle => {
+    const style: ViewStyle = { ...styles.button }
     
     if (variant === 'primary') {
       style.backgroundColor = '#1B4332'
@@ -43,8 +43,8 @@ export default function Button({
     return style
   }
 
-  const getTextStyle = (): any => {
-    const style: any = { ...styles.text }
+  const getTextStyle = (): TextStyle => {
+    const style: TextStyle = { ...styles.text }
 
     if (variant === 'primary') {
       style.color = '#FFFFFF'

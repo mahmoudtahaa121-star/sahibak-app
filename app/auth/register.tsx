@@ -96,7 +96,6 @@ const handleRegister = async () => {
         });
 
       if (profileError) {
-        console.error('Profile insert error:', profileError);
         Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${profileError.message}`);
         return;
       }
@@ -118,7 +117,6 @@ const handleRegister = async () => {
     }
 
   } catch (error) {
-    console.error('Signup error:', error);
     Alert.alert('خطأ', 'حدث خطأ غير متوقع');
   } finally {
     setLoading(false);

@@ -1,26 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
+import { useParentCategories } from '../../hooks/useCategories'
 import { Category } from '../../types'
 
 export default function AllCategoriesScreen() {
-  const { data: categories, isLoading } = useQuery({
-    queryKey: ['all-categories'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .is('parent_id', null)
-        .eq('is_active', true)
-        .eq('show_on_home', true)
-        .order('sort_order')
-
-      if (error) throw error
-      return data as Category[]
-    },
-  })
+  const insets = useSafeAreaInsets()
+  const { data: categories, isLoading } = useParentCategories()
 
   return (
     <View style={styles.container}>
@@ -136,7 +123,5 @@ const styles = StyleSheet.create({
   },
   footer: {
     height: 20,
-  },
-})
   },
 })

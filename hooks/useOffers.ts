@@ -15,7 +15,7 @@ export function useOffers(area: string) {
         .or('expires_at.is.null,expires_at.gt.' + now)
         .order('created_at', { ascending: false })
       if (error) throw error
-      return (data ?? []).filter((o: any) => o.place?.area === area)
+      return (data ?? []).filter((o) => o.place?.area === area)
     },
   })
 }

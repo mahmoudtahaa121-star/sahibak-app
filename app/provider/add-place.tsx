@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
+import { useParentCategories } from '../../hooks/useCategories'
+import { useAddPlace } from '../../hooks/useAddPlace'
 import { supabase } from '../../lib/supabase'
 import { Category } from '../../types'
 
@@ -30,9 +32,9 @@ interface Service {
 export default function AddPlaceScreen() {
   const insets = useSafeAreaInsets()
   const { user, profile } = useAuth()
+  const addPlaceMutation = useAddPlace()
+  const { data: categories } = useParentCategories()
   const [step, setStep] = useState<Step>(1)
-  const [loading, setLoading] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
   const [selectedParent, setSelectedParent] = useState<Category | null>(null)
 
   const [placeType, setPlaceType] = useState<PlaceType | null>(null)
@@ -46,26 +48,9 @@ export default function AddPlaceScreen() {
     { id: '1', name_ar: '', description_ar: '' }
   ])
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
   if (profile && profile.role !== 'provider' && profile.role !== 'admin') {
     router.replace('/')
     return null
-  }
-
-  const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .is('parent_id', null)
-      .eq('is_active', true)
-      .order('sort_order')
-
-    if (data && !error) {
-      setCategories(data)
-    }
   }
 
   const fetchChildCategories = async (parentId: number) => {
@@ -152,13 +137,11 @@ export default function AddPlaceScreen() {
   }
 
   const handleSubmit = async () => {
-    if (!user) return
+    if (!user || !placeType) return
 
-    setLoading(true)
     try {
-      const { data: placeData, error: placeError } = await supabase
-        .from('places')
-        .insert({
+      await addPlaceMutation.mutateAsync({
+        placeData: {
           provider_id: user.id,
           area: 'المنصورية',
           place_type: placeType,
@@ -167,30 +150,13 @@ export default function AddPlaceScreen() {
           whatsapp: whatsapp.trim() || null,
           description_ar: descriptionAr.trim() || null,
           address_text: placeType === 'shop' ? addressText.trim() : null,
-          status: 'pending',
-        })
-        .select()
-        .single()
-
-      if (placeError) throw placeError
-
-      const placeId = placeData.id
-
-      for (const categoryId of selectedCategories) {
-        await supabase.from('place_categories').insert({
-          place_id: placeId,
-          category_id: categoryId,
-        })
-      }
-
-      const validServices = services.filter(s => s.name_ar.trim())
-      for (const service of validServices) {
-        await supabase.from('place_services').insert({
-          place_id: placeId,
-          name_ar: service.name_ar.trim(),
-          description_ar: service.description_ar.trim() || null,
-        })
-      }
+        },
+        categoryIds: selectedCategories,
+        services: services.map(s => ({
+          name_ar: s.name_ar,
+          description_ar: s.description_ar,
+        })),
+      })
 
       Alert.alert(
         'تم الإرسال',
@@ -199,9 +165,6 @@ export default function AddPlaceScreen() {
       )
     } catch (error) {
       Alert.alert('خطأ', 'فشل إرسال الطلب')
-      console.error(error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -256,7 +219,7 @@ export default function AddPlaceScreen() {
 
       {!selectedParent ? (
         <View style={styles.categoriesGrid}>
-          {categories.map((category) => (
+          {categories?.map((category: Category) => (
             <TouchableOpacity
               key={category.id}
               style={styles.categoryCard}
@@ -415,7 +378,7 @@ export default function AddPlaceScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Pla[tform.OS === , { paddingTop: insets.top }]'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -425,7 +388,7 @@ export default function AddPlaceScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
         <View style={styles.progressContainer}>
           {[1, 2, 3, 4].map((s) => (
             <View key={s} style={styles.progressStep}>
@@ -453,15 +416,15 @@ export default function AddPlaceScreen() {
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
         {step === 4 && renderStep4()}
-      </ScrollView>[, { paddingBottom: insets.bottom + 16 }]
+      </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.nextButton}
           onPress={handleNext}
-          disabled={loading}
+          disabled={addPlaceMutation.isPending}
         >
-          {loading ? (
+          {addPlaceMutation.isPending ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.nextButtonText}>

@@ -10,10 +10,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
 import { Place } from '../../types'
 import { useArea } from '../../hooks/useArea'
+import { useCategoryPlaces, useCategory } from '../../hooks/useCategoryPlaces'
 import PlaceCard from '../../components/place/PlaceCard'
 
 type FilterType = 'all' | 'shop' | 'person'
@@ -24,43 +23,8 @@ export default function CategoryScreen() {
   const { selectedArea } = useArea()
   const [filter, setFilter] = useState<FilterType>('all')
 
-  const { data: category, isLoading: categoryLoading } = useQuery({
-    queryKey: ['category', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('id', parseInt(id))
-        .single()
-
-      if (error) throw error
-      return data
-    },
-  })
-
-  const { data: places, isLoading: placesLoading } = useQuery({
-    queryKey: ['category-places', id, selectedArea, filter],
-    queryFn: async () => {
-      let query = supabase
-        .from('places')
-        .select('*, place_categories!inner(category_id), place_services(id, name_ar, description_ar)')
-        .eq('status', 'approved')
-        .is('deleted_at', null)
-        .eq('place_categories.category_id', parseInt(id))
-        .eq('area', selectedArea)
-
-      if (filter !== 'all') {
-        query = query.eq('place_type', filter)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      return data as Place[]
-    },
-    enabled: !!id,
-  })
+  const { data: category, isLoading: categoryLoading } = useCategory(id)
+  const { data: places, isLoading: placesLoading } = useCategoryPlaces(id, selectedArea, filter)
 
   const filteredPlaces = places || []
 

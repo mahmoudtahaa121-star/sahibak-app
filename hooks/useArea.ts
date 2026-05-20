@@ -18,7 +18,6 @@ export function useArea() {
           .single()
 
         if (error) {
-          console.error('Fetch areas error:', error)
           return
         }
 
@@ -36,7 +35,7 @@ export function useArea() {
         }
       } catch (err) {
         console.error('Unexpected error:', err)
-      }
+      } // Will use default area
     }
 
     fetchAreas()

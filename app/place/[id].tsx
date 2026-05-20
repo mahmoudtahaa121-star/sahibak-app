@@ -16,49 +16,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import * as Linking from 'expo-linking'
 import * as Sharing from 'expo-sharing'
 import { supabase } from '../../lib/supabase'
-import { Place, Offer } from '../../types'
+import { Place } from '../../types'
 import { useAuth } from '../../hooks/useAuth'
+import { usePlace } from '../../hooks/usePlace'
+import { useToggleFavorite } from '../../hooks/useFavorites'
+import { isLoading } from 'expo-font'
 
 export default function PlaceScreen() {
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { user } = useAuth()
   const queryClient = useQueryClient()
+  const toggleFavorite = useToggleFavorite()
 
-  const { data: place, isLoading, error } = useQuery({
-    queryKey: ['place', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('places')
-        .select(`
-          *,
-          categories:place_categories(
-            category:categories(id, name_ar, icon, color)
-          ),
-          services:place_services(
-            id, name_ar, description_ar, sort_order
-          ),
-          offers:offers(
-            id, title_ar, description_ar, expires_at, status
-          )
-        `)
-        .eq('id', id)
-        .eq('status', 'approved')
-        .is('deleted_at', null)
-        .single()
-
-      if (error) throw error
-
-      const approvedOffers = data.offers?.filter((o: any) => o.status === 'approved') || []
-
-      return {
-        ...data,
-        categories: data.categories?.map((c: any) => c.category) || [],
-        services: data.services?.sort((a: any, b: any) => a.sort_order - b.sort_order) || [],
-        offers: approvedOffers,
-      } as Place & { offers: Offer[] }
-    },
-  })
+  const { data: place, isLoading, error } = usePlace(id)
 
   const { data: isFavorite } = useQuery({
     queryKey: ['favorite', id, user?.id],
@@ -92,16 +63,16 @@ export default function PlaceScreen() {
       try {
         await Sharing.shareAsync(`${place.name_ar}\n${place.phone}\nعبر صاحبك`)
       } catch (error) {
-        console.error('Share error:', error)
+        // Share failed - user cancelled or error occurred
       }
     }
-  }, [place])
+  }, [place]) 
 
   const handleToggleFavorite = useCallback(async () => {
     if (!user) {
       router.push('/auth/login')
       return
-    }
+    } 
 
     if (isFavorite) {
       await supabase
@@ -144,7 +115,7 @@ export default function PlaceScreen() {
       ],
       'plain-text'
     )
-  }, [user, place])
+  }, [place])
 
   if (isLoading) {
     return (

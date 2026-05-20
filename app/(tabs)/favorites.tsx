@@ -1,32 +1,28 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useAuth } from '../../hooks/useAuth'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
+import { useFavorites, useToggleFavorite } from '../../hooks/useFavorites'
 import { Place } from '../../types'
 import { Ionicons } from '@expo/vector-icons'
+import PlaceCard from '../../components/place/PlaceCard'
 
 export default function FavoritesScreen() {
   const insets = useSafeAreaInsets()
   const { user } = useAuth()
   const router = useRouter()
+  const toggleFavorite = useToggleFavorite()
 
-  const { data: favorites, isLoading } = useQuery({
-    queryKey: ['favorites', user?.id],
-    queryFn: async () => {
-      if (!user) return []
-      const { data, error } = await supabase
-        .from('favorites')
-        .select('*, places(*)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+  const { data: favorites, isLoading, refetch } = useFavorites(user?.id)
 
-      if (error) throw error
-      return data?.map((f: any) => f.places).filter(Boolean) || []
-    },
-    enabled: !!user,
-  })
+  const handleRemoveFavorite = async (placeId: string) => {
+    if (!user) return
+    await toggleFavorite.mutateAsync({
+      userId: user.id,
+      placeId,
+      isFavorite: true,
+    })
+  }
 
   if (!user) {
     return (
@@ -57,37 +53,40 @@ export default function FavoritesScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.content}>
-          <Text style={styles.emoji}>📭</Text>
+          <Text style={styles.emoji}>🤍</Text>
           <Text style={styles.title}>لا توجد مفضلات بعد</Text>
-          <Text style={styles.subtitle}>ابدأ بإضافة الأماكن التي تحبها</Text>
+          <Text style={styles.subtitle}>تصفح الأماكن وأضف ما يعجبك</Text>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/')}>
+            <Text style={styles.buttonText}>تصفح الأماكن</Text>
+          </TouchableOpacity>
         </View>
       </View>
     )
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={isLoading}
+          onRefresh={refetch}
+          colors={['#1B4332']}
+          tintColor="#1B4332"
+        />
+      }
+    >
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <Text style={styles.headerTitle}>مفضلاتي</Text>
       </View>
       <View style={styles.list}>
         {favorites.map((place: Place) => (
-          <TouchableOpacity
+          <PlaceCard
             key={place.id}
-            style={styles.card}
+            place={place}
             onPress={() => router.push(`/place/${place.id}`)}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={styles.placeName}>{place.name_ar}</Text>
-              <Ionicons name="heart" size={20} color="#EF4444" />
-            </View>
-            {place.phone && (
-              <Text style={styles.placePhone}>📱 {place.phone}</Text>
-            )}
-            {place.address_text && (
-              <Text style={styles.placeAddress}>📍 {place.address_text}</Text>
-            )}
-          </TouchableOpacity>
+            onRemoveFavorite={() => handleRemoveFavorite(place.id)}
+          />
         ))}
       </View>
     </ScrollView>

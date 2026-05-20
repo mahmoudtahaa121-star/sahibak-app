@@ -5,9 +5,10 @@ import { Place } from '../../types'
 interface PlaceCardProps {
   place: Place
   onPress: () => void
+  onRemoveFavorite?: () => void
 }
 
-export default function PlaceCard({ place, onPress }: PlaceCardProps) {
+export default function PlaceCard({ place, onPress, onRemoveFavorite }: PlaceCardProps) {
   const category = place.categories?.[0]
   const placeTypeBadge = place.place_type === 'shop' ? '🏪 محل' : '👤 شخص'
   const badgeBg = place.place_type === 'shop' ? '#F8F9FA' : '#F5E6C0'
@@ -51,7 +52,18 @@ export default function PlaceCard({ place, onPress }: PlaceCardProps) {
         </View>
       </View>
 
-      <Ionicons name="chevron-forward" size={20} color="#ADB5BD" />
+      <View style={styles.rightSection}>
+        {onRemoveFavorite && (
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={onRemoveFavorite}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="heart" size={20} color="#EF4444" />
+          </TouchableOpacity>
+        )}
+        <Ionicons name="chevron-forward" size={20} color="#ADB5BD" />
+      </View>
     </TouchableOpacity>
   )
 }
@@ -134,5 +146,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_400Regular',
     fontSize: 10,
     color: '#1A1A1A',
+  },
+  likesText: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 11,
+    color: '#6C757D',
+  },
+  rightSection: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  removeButton: {
+    padding: 4,
   },
 })

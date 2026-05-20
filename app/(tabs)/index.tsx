@@ -95,7 +95,7 @@ export default function HomeScreen() {
         refetchOffers(),
       ])
     } catch (error) {
-      console.error('Refresh error:', error)
+      // Error during refresh - silently ignore
     } finally {
       setRefreshing(false)
     }
@@ -168,30 +168,15 @@ export default function HomeScreen() {
           <View style={styles.searchSuggestions}>
             <Text style={styles.suggestionsTitle}>ابحث عن أي خدمة في المنصورية</Text>
             <View style={styles.suggestionChips}>
-              <TouchableOpacity
-                style={styles.suggestionChip}
-                onPress={() => router.push('/category/1')}
-              >
-                <Text style={styles.suggestionChipText}>🍽️ مطاعم</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.suggestionChip}
-                onPress={() => router.push('/category/2')}
-              >
-                <Text style={styles.suggestionChipText}>👨‍⚕️ أطباء</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.suggestionChip}
-                onPress={() => router.push('/category/3')}
-              >
-                <Text style={styles.suggestionChipText}>🔧 سباكة</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.suggestionChip}
-                onPress={() => router.push('/category/4')}
-              >
-                <Text style={styles.suggestionChipText}>⚡ كهرباء</Text>
-              </TouchableOpacity>
+              {categories?.slice(0, 4).map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={styles.suggestionChip}
+                  onPress={() => router.push(`/category/${category.id}`)}
+                >
+                  <Text style={styles.suggestionChipText}>{category.icon} {category.name_ar}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         ) : (

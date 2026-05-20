@@ -232,7 +232,6 @@ export default function EditPlaceScreen() {
       )
     } catch (error) {
       Alert.alert('خطأ', 'فشل تحديث البيانات')
-      console.error(error)
     } finally {
       setLoading(false)
     }

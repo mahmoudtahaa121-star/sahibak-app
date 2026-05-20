@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Linking from 'expo-linking'
+import Constants from 'expo-constants'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleBadge } from '../../utils/badges'
 
@@ -11,6 +12,7 @@ export default function MoreScreen() {
   const insets = useSafeAreaInsets()
   const { user, profile, signOut } = useAuth()
   const [showAboutModal, setShowAboutModal] = useState(false)
+  const version = Constants.expoConfig?.version ?? '1.0.0'
 
   const handleAbout = useCallback(() => {
     setShowAboutModal(true)
@@ -126,7 +128,7 @@ export default function MoreScreen() {
         >
           <View style={styles.aboutModalContent}>
             <Text style={styles.appName}>صاحبك</Text>
-            <Text style={styles.version}>الإصدار 1.0.0</Text>
+            <Text style={styles.version}>الإصدار {version}</Text>
             <Text style={styles.description}>دليلك للخدمات المحلية في المنصورية</Text>
             <Text style={styles.loveText}>تم التطوير بـ ❤️ للمنصورية</Text>
             <TouchableOpacity

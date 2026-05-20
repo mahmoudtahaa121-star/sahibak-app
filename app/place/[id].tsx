@@ -20,7 +20,7 @@ import { Place } from '../../types'
 import { useAuth } from '../../hooks/useAuth'
 import { usePlace } from '../../hooks/usePlace'
 import { useToggleFavorite } from '../../hooks/useFavorites'
-import { isLoading } from 'expo-font'
+import Skeleton from '../../components/ui/Skeleton'
 
 export default function PlaceScreen() {
   const insets = useSafeAreaInsets()
@@ -119,8 +119,20 @@ export default function PlaceScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#1B4332" />
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+          <View style={{ width: 24 }} />
+          <Skeleton width={150} height={20} borderRadius={4} />
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={{ width: '100%' }}>
+          <Skeleton width={350} height={200} />
+        </View>
+        <View style={styles.infoCard}>
+          <Skeleton width={200} height={24} borderRadius={4} style={{ marginBottom: 8 }} />
+          <Skeleton width={120} height={16} borderRadius={4} style={{ marginBottom: 4 }} />
+          <Skeleton width={180} height={16} borderRadius={4} />
+        </View>
       </View>
     )
   }

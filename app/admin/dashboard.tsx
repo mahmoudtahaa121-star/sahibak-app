@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
@@ -14,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { Place, Offer, Profile } from '../../types'
+import Skeleton from '../../components/ui/Skeleton'
 
 interface PendingPlace extends Omit<Place, 'categories' | 'services'> {
   categories?: { category: { id: number; name_ar: string; icon: string | null } }[]
@@ -39,6 +41,7 @@ export default function AdminDashboardScreen() {
   })
   const [pendingPlaces, setPendingPlaces] = useState<PendingPlace[]>([])
   const [pendingOffers, setPendingOffers] = useState<PendingOffer[]>([])
+  const [editRequests, setEditRequests] = useState<any[]>([])
   const [reports, setReports] = useState<any[]>([])
   const [providers, setProviders] = useState<Profile[]>([])
 
@@ -49,6 +52,7 @@ export default function AdminDashboardScreen() {
         fetchStats(),
         fetchPendingPlaces(),
         fetchPendingOffers(),
+        fetchEditRequests(),
         fetchReports(),
         fetchProviders(),
       ])
@@ -112,6 +116,18 @@ export default function AdminDashboardScreen() {
 
     if (data && !error) {
       setPendingOffers(data as PendingOffer[])
+    }
+  }, [])
+
+  const fetchEditRequests = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('place_edit_requests')
+      .select('*, place:places(id, name_ar)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+
+    if (data && !error) {
+      setEditRequests(data)
     }
   }, [])
 
@@ -317,6 +333,117 @@ export default function AdminDashboardScreen() {
     }
   }, [fetchProviders])
 
+  const approveEditRequest = useCallback(async (requestId: string, placeId: string, fieldName: string, newValue: string) => {
+    setRefreshing(true)
+    try {
+      // Update the place field
+      if (fieldName === 'category_ids') {
+        // Handle category_ids separately
+        const newCategoryIds = JSON.parse(newValue)
+        await supabase.from('place_categories').delete().eq('place_id', placeId)
+        for (const categoryId of newCategoryIds) {
+          await supabase.from('place_categories').insert({
+            place_id: placeId,
+            category_id: categoryId,
+          })
+        }
+      } else {
+        // Update simple field
+        await supabase
+          .from('places')
+          .update({ [fieldName]: newValue })
+          .eq('id', placeId)
+      }
+
+      // Update request status
+      await supabase
+        .from('place_edit_requests')
+        .update({ status: 'approved' })
+        .eq('id', requestId)
+
+      // Insert audit log
+      await supabase.from('audit_log').insert({
+        admin_id: user?.id,
+        action: 'approved_edit_request',
+        target_type: 'place_edit_request',
+        target_id: requestId,
+      })
+
+      await fetchEditRequests()
+      Alert.alert('تم', 'تمت الموافقة على التعديل')
+    } catch (error) {
+      Alert.alert('خطأ', 'فشل الموافقة')
+    } finally {
+      setRefreshing(false)
+    }
+  }, [user, fetchEditRequests])
+
+  const rejectEditRequest = useCallback(async (requestId: string) => {
+    Alert.prompt(
+      'سبب الرفض',
+      'أدخل سبب رفض التعديل',
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'رفض',
+          onPress: async (reason?: string) => {
+            if (!reason) {
+              Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
+              return
+            }
+
+            setRefreshing(true)
+            try {
+              await supabase
+                .from('place_edit_requests')
+                .update({ status: 'rejected' })
+                .eq('id', requestId)
+
+              await supabase.from('audit_log').insert({
+                admin_id: user?.id,
+                action: 'rejected_edit_request',
+                target_type: 'place_edit_request',
+                target_id: requestId,
+              })
+
+              await fetchEditRequests()
+              Alert.alert('تم', 'تم رفض التعديل')
+            } catch (error) {
+              Alert.alert('خطأ', 'فشل الرفض')
+            } finally {
+              setRefreshing(false)
+            }
+          },
+        },
+      ],
+      'plain-text'
+    )
+  }, [user, fetchEditRequests])
+
+  const getFieldLabel = useCallback((fieldName: string) => {
+    const labels: Record<string, string> = {
+      name_ar: 'اسم المكان',
+      category_ids: 'التصنيفات',
+      phone: 'رقم التليفون',
+      whatsapp: 'رقم واتساب',
+      description_ar: 'الوصف',
+      image_url: 'الصورة',
+    }
+    return labels[fieldName] || fieldName
+  }, [])
+
+  const formatValue = useCallback((value: string, fieldName: string) => {
+    if (fieldName === 'category_ids') {
+      try {
+        const ids = JSON.parse(value)
+        return `${ids.length} تصنيف`
+      } catch {
+        return value
+      }
+    }
+    return value || '-'
+  }, [])
+
   const getTimeAgo = useCallback((dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -332,13 +459,44 @@ export default function AdminDashboardScreen() {
 
   if (authLoading || loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator color="#1B4332" size="large" />
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
+          <Skeleton width={150} height={28} borderRadius={4} />
+          <Skeleton width={120} height={14} borderRadius={4} />
+        </View>
+        <View style={styles.statsContainer}>
+          {[1, 2, 3, 4].map((i) => (
+            <View key={i} style={styles.statCard}>
+              <Skeleton width={50} height={32} borderRadius={4} style={{ marginBottom: 4 }} />
+              <Skeleton width={60} height={12} borderRadius={4} />
+            </View>
+          ))}
+        </View>
+        <View style={styles.section}>
+          <Skeleton width={150} height={18} borderRadius={4} style={{ marginBottom: 12, paddingHorizontal: 16 }} />
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={[styles.card, { marginHorizontal: 16, marginBottom: 12 }]}>
+              <Skeleton width={200} height={16} borderRadius={4} style={{ marginBottom: 8 }} />
+              <Skeleton width={150} height={13} borderRadius={4} />
+            </View>
+          ))}
+        </View>
       </View>
     )
   }
   return (
-    <ScrollView style={styles.container}  contentContainerStyle={{ paddingTop: insets.top }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: insets.top }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={fetchData}
+          colors={['#1B4332']}
+          tintColor="#1B4332"
+        />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>لوحة الإدارة</Text>
         <Text style={styles.headerSubtitle}>مرحباً، {profile?.full_name}</Text>
@@ -493,6 +651,61 @@ export default function AdminDashboardScreen() {
                 <TouchableOpacity
                   style={styles.rejectButton}
                   onPress={() => rejectOffer(offer.id)}
+                  disabled={refreshing}
+                >
+                  <Ionicons name="close" size={18} color="#FFFFFF" />
+                  <Text style={styles.rejectButtonText}>رفض</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>طلبات التعديل</Text>
+          {editRequests.length > 0 && (
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingBadgeText}>{editRequests.length}</Text>
+            </View>
+          )}
+        </View>
+
+        {editRequests.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>لا توجد طلبات تعديل</Text>
+          </View>
+        ) : (
+          editRequests.map((request) => (
+            <View key={request.id} style={styles.card}>
+              <Text style={styles.cardTitle}>{request.place?.name_ar || 'مكان محذوف'}</Text>
+              <Text style={styles.cardCategory}>
+                الحقل: {getFieldLabel(request.field_name)}
+              </Text>
+              <View style={styles.changeContainer}>
+                <View style={styles.changeBox}>
+                  <Text style={styles.changeLabel}>القيمة الحالية:</Text>
+                  <Text style={styles.changeValue}>{formatValue(request.old_value, request.field_name)}</Text>
+                </View>
+                <Ionicons name="arrow-back" size={20} color="#1B4332" />
+                <View style={styles.changeBox}>
+                  <Text style={styles.changeLabel}>القيمة الجديدة:</Text>
+                  <Text style={styles.changeValue}>{formatValue(request.new_value, request.field_name)}</Text>
+                </View>
+              </View>
+              <View style={styles.cardActions}>
+                <TouchableOpacity
+                  style={styles.approveButton}
+                  onPress={() => approveEditRequest(request.id, request.place_id, request.field_name, request.new_value)}
+                  disabled={refreshing}
+                >
+                  <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+                  <Text style={styles.approveButtonText}>موافقة</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.rejectButton}
+                  onPress={() => rejectEditRequest(request.id)}
                   disabled={refreshing}
                 >
                   <Ionicons name="close" size={18} color="#FFFFFF" />
@@ -731,6 +944,32 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_400Regular',
     fontSize: 12,
     color: '#6C757D',
+  },
+  changeContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginVertical: 8,
+  },
+  changeBox: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  changeLabel: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 11,
+    color: '#6C757D',
+    marginBottom: 4,
+  },
+  changeValue: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 13,
+    color: '#1A1A1A',
   },
   cardActions: {
     flexDirection: 'row',

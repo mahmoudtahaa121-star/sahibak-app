@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import { useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useArea } from '../../hooks/useArea'
@@ -9,7 +10,14 @@ import Skeleton from '../../components/ui/Skeleton'
 export default function OffersScreen() {
   const insets = useSafeAreaInsets()
   const { selectedArea } = useArea()
-  const { data: offers, isLoading } = useOffers(selectedArea)
+  const { data: offers, isLoading, refetch } = useOffers(selectedArea)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   return (
     <View style={styles.container}>
@@ -17,7 +25,18 @@ export default function OffersScreen() {
         <Text style={styles.headerText}>🔥 عروض المنصورية</Text>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#1B4332']}
+            tintColor="#1B4332"
+          />
+        }
+      >
         {isLoading ? (
           <View style={styles.skeletonContainer}>
             {[1, 2, 3].map((i) => (

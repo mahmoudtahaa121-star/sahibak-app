@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   View,
   Text,
@@ -5,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -13,11 +15,19 @@ import { Place } from '../../types'
 import { getStatusBadge } from '../../utils/badges'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useProviderPlaces } from '../../hooks/useProviderPlaces'
+import Skeleton from '../../components/ui/Skeleton'
 
 export default function ProviderDashboardScreen() {
   const insets = useSafeAreaInsets()
   const { user, profile, loading: authLoading } = useAuth()
-  const { data: places, isLoading } = useProviderPlaces(user?.id)
+  const { data: places, isLoading, refetch } = useProviderPlaces(user?.id)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await refetch()
+    setRefreshing(false)
+  }
 
   if (authLoading) {
     return (
@@ -66,7 +76,18 @@ export default function ProviderDashboardScreen() {
   const pendingPlaces = places?.filter((p: Place) => p.status === 'pending').length || 0
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingTop: insets.top }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: insets.top }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#1B4332']}
+          tintColor="#1B4332"
+        />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.title}>لوحة المزود</Text>
         <Text style={styles.subtitle}>مرحباً، {profile.full_name}</Text>
@@ -100,8 +121,13 @@ export default function ProviderDashboardScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator color="#1B4332" />
+        <View style={styles.placesList}>
+          {[1, 2].map((i) => (
+            <View key={i} style={styles.placeCard}>
+              <Skeleton width={150} height={16} borderRadius={4} style={{ marginBottom: 8 }} />
+              <Skeleton width={100} height={13} borderRadius={4} />
+            </View>
+          ))}
         </View>
       ) : !places || places.length === 0 ? (
         <View style={styles.emptyContainer}>

@@ -46,6 +46,15 @@ export default function EditPlaceScreen() {
     { id: '1', name_ar: '', description_ar: '' }
   ])
 
+  // Track original values to detect changes
+  const [originalData, setOriginalData] = useState<{
+    name_ar: string
+    phone: string
+    whatsapp: string | null
+    description_ar: string | null
+    categoryIds: number[]
+  } | null>(null)
+
   useEffect(() => {
     fetchPlaceData()
     fetchCategories()
@@ -70,9 +79,18 @@ export default function EditPlaceScreen() {
       setWhatsapp(place.whatsapp || '')
       setDescriptionAr(place.description_ar || '')
       setAddressText(place.address_text || '')
-      
+
       const categoryIds = place.place_categories?.map((pc: any) => pc.category_id) || []
       setSelectedCategories(categoryIds)
+
+      // Store original values for change detection
+      setOriginalData({
+        name_ar: place.name_ar || '',
+        phone: place.phone || '',
+        whatsapp: place.whatsapp || null,
+        description_ar: place.description_ar || null,
+        categoryIds,
+      })
 
       const existingServices = place.place_services?.map((ps: PlaceService) => ({
         id: ps.id,
@@ -186,36 +204,24 @@ export default function EditPlaceScreen() {
   }
 
   const handleSubmit = async () => {
-    if (!user || !id) return
+    if (!user || !id || !originalData) return
 
     setLoading(true)
     try {
-      const { error: placeError } = await supabase
-        .from('places')
-        .update({
-          place_type: placeType,
-          name_ar: nameAr.trim(),
-          phone: phone.trim(),
-          whatsapp: whatsapp.trim() || null,
-          description_ar: descriptionAr.trim() || null,
-          address_text: placeType === 'shop' ? addressText.trim() : null,
-          status: 'pending',
-        })
-        .eq('id', id)
+      // Detect which fields changed
+      const nameChanged = nameAr.trim() !== originalData.name_ar
+      const phoneChanged = phone.trim() !== originalData.phone
+      const whatsappChanged = (whatsapp.trim() || null) !== originalData.whatsapp
+      const descriptionChanged = (descriptionAr.trim() || null) !== originalData.description_ar
+      const categoriesChanged = !arraysEqual(selectedCategories, originalData.categoryIds)
 
-      if (placeError) throw placeError
+      // Group A: Direct publish (no approval needed)
+      // Group B: Requires admin approval
+      const groupAChanged = phoneChanged || whatsappChanged || descriptionChanged
+      const groupBChanged = nameChanged || categoriesChanged
 
-      await supabase.from('place_categories').delete().eq('place_id', id)
-
-      for (const categoryId of selectedCategories) {
-        await supabase.from('place_categories').insert({
-          place_id: id,
-          category_id: categoryId,
-        })
-      }
-
+      // Always update services directly
       await supabase.from('place_services').delete().eq('place_id', id)
-
       const validServices = services.filter(s => s.name_ar.trim())
       for (const service of validServices) {
         await supabase.from('place_services').insert({
@@ -225,16 +231,82 @@ export default function EditPlaceScreen() {
         })
       }
 
-      Alert.alert(
-        'تم التحديث',
-        'تم تحديث بيانات المكان وإرسالها للمراجعة!',
-        [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
-      )
+      if (groupBChanged) {
+        // If any Group B field changed, create edit requests
+        if (nameChanged) {
+          await supabase.from('place_edit_requests').insert({
+            place_id: id,
+            field_name: 'name_ar',
+            old_value: originalData.name_ar,
+            new_value: nameAr.trim(),
+            status: 'pending',
+          })
+        }
+
+        if (categoriesChanged) {
+          await supabase.from('place_edit_requests').insert({
+            place_id: id,
+            field_name: 'category_ids',
+            old_value: JSON.stringify(originalData.categoryIds),
+            new_value: JSON.stringify(selectedCategories),
+            status: 'pending',
+          })
+        }
+
+        // Still update Group A fields directly
+        if (groupAChanged) {
+          await supabase
+            .from('places')
+            .update({
+              phone: phone.trim(),
+              whatsapp: whatsapp.trim() || null,
+              description_ar: descriptionAr.trim() || null,
+            })
+            .eq('id', id)
+        }
+
+        Alert.alert(
+          'تم الإرسال',
+          'تم إرسال طلب التعديل للمراجعة ⏳',
+          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
+        )
+      } else if (groupAChanged) {
+        // Only Group A fields changed - update directly
+        await supabase
+          .from('places')
+          .update({
+            phone: phone.trim(),
+            whatsapp: whatsapp.trim() || null,
+            description_ar: descriptionAr.trim() || null,
+          })
+          .eq('id', id)
+
+        Alert.alert(
+          'تم التحديث',
+          'تم التحديث بنجاح ✅',
+          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
+        )
+      } else {
+        // Only services changed
+        Alert.alert(
+          'تم التحديث',
+          'تم تحديث الخدمات بنجاح ✅',
+          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
+        )
+      }
     } catch (error) {
       Alert.alert('خطأ', 'فشل تحديث البيانات')
     } finally {
       setLoading(false)
     }
+  }
+
+  // Helper function to compare arrays
+  const arraysEqual = (a: number[], b: number[]) => {
+    if (a.length !== b.length) return false
+    const sortedA = [...a].sort()
+    const sortedB = [...b].sort()
+    return sortedA.every((val, index) => val === sortedB[index])
   }
 
   const handleNext = () => {

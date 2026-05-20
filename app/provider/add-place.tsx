@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../hooks/useAuth'
 import { useParentCategories } from '../../hooks/useCategories'
 import { useAddPlace } from '../../hooks/useAddPlace'
+import { useProviderPlaces } from '../../hooks/useProviderPlaces'
 import { supabase } from '../../lib/supabase'
 import { Category } from '../../types'
 
@@ -34,8 +35,18 @@ export default function AddPlaceScreen() {
   const { user, profile } = useAuth()
   const addPlaceMutation = useAddPlace()
   const { data: categories } = useParentCategories()
+  const { data: existingPlaces } = useProviderPlaces(user?.id)
   const [step, setStep] = useState<Step>(1)
   const [selectedParent, setSelectedParent] = useState<Category | null>(null)
+
+  // Calculate place counts for limit check
+  const shopCount = existingPlaces?.filter(
+    p => p.place_type === 'shop' && p.deleted_at === null
+  ).length ?? 0
+
+  const personCount = existingPlaces?.filter(
+    p => p.place_type === 'person' && p.deleted_at === null
+  ).length ?? 0
 
   const [placeType, setPlaceType] = useState<PlaceType | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
@@ -184,13 +195,23 @@ export default function AddPlaceScreen() {
         style={[
           styles.typeCard,
           placeType === 'shop' && styles.typeCardSelected,
+          shopCount >= 1 && styles.typeCardDisabled,
         ]}
-        onPress={() => setPlaceType('shop')}
+        onPress={() => shopCount < 1 && setPlaceType('shop')}
+        disabled={shopCount >= 1}
       >
         <Text style={styles.typeEmoji}>🏪</Text>
-        <Text style={styles.typeName}>محل أو مكان</Text>
+        <View style={styles.typeInfo}>
+          <Text style={styles.typeName}>محل أو مكان</Text>
+          {shopCount >= 1 && (
+            <Text style={styles.limitMessage}>لديك محل مسجل بالفعل</Text>
+          )}
+        </View>
         {placeType === 'shop' && (
           <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
+        )}
+        {shopCount >= 1 && (
+          <Ionicons name="lock-closed" size={24} color="#ADB5BD" />
         )}
       </TouchableOpacity>
 
@@ -198,15 +219,33 @@ export default function AddPlaceScreen() {
         style={[
           styles.typeCard,
           placeType === 'person' && styles.typeCardSelected,
+          personCount >= 1 && styles.typeCardDisabled,
         ]}
-        onPress={() => setPlaceType('person')}
+        onPress={() => personCount < 1 && setPlaceType('person')}
+        disabled={personCount >= 1}
       >
         <Text style={styles.typeEmoji}>👤</Text>
-        <Text style={styles.typeName}>شخص / مهنة</Text>
+        <View style={styles.typeInfo}>
+          <Text style={styles.typeName}>شخص / مهنة</Text>
+          {personCount >= 1 && (
+            <Text style={styles.limitMessage}>لديك ملف شخصي مسجل بالفعل</Text>
+          )}
+        </View>
         {placeType === 'person' && (
           <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
         )}
+        {personCount >= 1 && (
+          <Ionicons name="lock-closed" size={24} color="#ADB5BD" />
+        )}
       </TouchableOpacity>
+
+      {shopCount >= 1 && personCount >= 1 && (
+        <View style={styles.maxLimitContainer}>
+          <Ionicons name="information-circle" size={24} color="#D4A843" />
+          <Text style={styles.maxLimitText}>وصلت للحد الأقصى من الأماكن</Text>
+          <Text style={styles.maxLimitSubtext}>تواصل معنا لإضافة المزيد</Text>
+        </View>
+      )}
     </View>
   )
 
@@ -526,14 +565,48 @@ const styles = StyleSheet.create({
   typeCardSelected: {
     borderColor: '#1B4332',
   },
+  typeCardDisabled: {
+    opacity: 0.6,
+    backgroundColor: '#F8F9FA',
+  },
   typeEmoji: {
     fontSize: 40,
   },
-  typeName: {
+  typeInfo: {
     flex: 1,
+  },
+  typeName: {
     fontFamily: 'Cairo_700Bold',
     fontSize: 16,
     color: '#1A1A1A',
+  },
+  limitMessage: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
+  },
+  maxLimitContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: '#FFF8E1',
+    borderWidth: 1,
+    borderColor: '#FFE082',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    marginTop: 16,
+  },
+  maxLimitText: {
+    flex: 1,
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 14,
+    color: '#E65100',
+  },
+  maxLimitSubtext: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 12,
+    color: '#8E8E93',
   },
   categoriesGrid: {
     flexDirection: 'row',

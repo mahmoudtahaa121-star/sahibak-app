@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -10,56 +10,52 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { supabase } from '../../lib/supabase'
-import { isValidEmail } from '../../utils/validation'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
+import { isValidEmail } from '../../utils/validation';
 
 export default function ForgotPasswordScreen() {
-  const insets = useSafeAreaInsets()
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
+  const insets = useSafeAreaInsets();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني')
-      return
+      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
+      return;
     }
 
     if (!isValidEmail(email.trim())) {
-      Alert.alert('خطأ', 'البريد الإلكتروني غير صالح')
-      return
+      Alert.alert('خطأ', 'البريد الإلكتروني غير صالح');
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: 'sahibak://auth/reset-password',
-      })
+      });
 
       if (error) {
-        Alert.alert('خطأ', error.message)
+        Alert.alert('خطأ', error.message);
       } else {
-        Alert.alert(
-          'تم الإرسال',
-          'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
-          [
-            {
-              text: 'حسناً',
-              onPress: () => router.replace('/auth/login'),
-            },
-          ]
-        )
+        Alert.alert('تم الإرسال', 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني', [
+          {
+            text: 'حسناً',
+            onPress: () => router.replace('/auth/login'),
+          },
+        ]);
       }
     } catch (error) {
-      Alert.alert('خطأ', 'حدث خطأ غير متوقع')
+      Alert.alert('خطأ', 'حدث خطأ غير متوقع');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -114,7 +110,7 @@ export default function ForgotPasswordScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -203,4 +199,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
   },
-})
+});

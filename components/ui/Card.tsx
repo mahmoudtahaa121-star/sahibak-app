@@ -1,9 +1,9 @@
-import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 
 interface CardProps {
-  children: React.ReactNode
-  onPress?: () => void
-  style?: StyleProp<ViewStyle>
+  children: React.ReactNode;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function Card({ children, onPress, style }: CardProps) {
@@ -12,10 +12,10 @@ export default function Card({ children, onPress, style }: CardProps) {
       <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
         {children}
       </TouchableOpacity>
-    )
+    );
   }
 
-  return <View style={[styles.card, style]}>{children}</View>
+  return <View style={[styles.card, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -26,4 +26,4 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 12,
   },
-})
+});

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -6,46 +6,48 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
-import { Place } from '../../types'
-import { useArea } from '../../hooks/useArea'
-import PlaceCard from '../../components/place/PlaceCard'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabase';
+import { Place } from '../../types';
+import { useArea } from '../../hooks/useArea';
+import PlaceCard from '../../components/place/PlaceCard';
 
-type FilterType = 'all' | 'shop' | 'person'
+type FilterType = 'all' | 'shop' | 'person';
 
 export default function AllPlacesScreen() {
-  const insets = useSafeAreaInsets()
-  const { selectedArea } = useArea()
-  const [filter, setFilter] = useState<FilterType>('all')
+  const insets = useSafeAreaInsets();
+  const { selectedArea } = useArea();
+  const [filter, setFilter] = useState<FilterType>('all');
 
   const { data: places, isLoading } = useQuery({
     queryKey: ['all-places', selectedArea, filter],
     queryFn: async () => {
       let query = supabase
         .from('places')
-        .select('*, place_categories(category:categories(*)), place_services(id, name_ar, description_ar)')
+        .select(
+          '*, place_categories(category:categories(*)), place_services(id, name_ar, description_ar)'
+        )
         .eq('status', 'approved')
         .is('deleted_at', null)
-        .eq('area', selectedArea)
+        .eq('area', selectedArea);
 
       if (filter !== 'all') {
-        query = query.eq('place_type', filter)
+        query = query.eq('place_type', filter);
       }
 
-      const { data, error } = await query
+      const { data, error } = await query;
 
-      if (error) throw error
+      if (error) throw error;
 
-      return data as Place[]
+      return data as Place[];
     },
-  })
+  });
 
-  const filteredPlaces = places || []
+  const filteredPlaces = places || [];
 
   return (
     <View style={styles.container}>
@@ -112,7 +114,7 @@ export default function AllPlacesScreen() {
         <View style={styles.footer} />
       </ScrollView>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -195,4 +197,4 @@ const styles = StyleSheet.create({
   footer: {
     height: 20,
   },
-})
+});

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,52 +8,52 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useAuth } from '../../hooks/useAuth'
-import { supabase } from '../../lib/supabase'
-import { Place, Offer, Profile } from '../../types'
-import Skeleton from '../../components/ui/Skeleton'
-import PromptModal from '../../components/ui/PromptModal'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
+import { Place, Offer, PlaceCategoryWithCategory, Profile } from '../../types';
+import Skeleton from '../../components/ui/Skeleton';
+import PromptModal from '../../components/ui/PromptModal';
 
 interface PendingPlace extends Omit<Place, 'categories' | 'services'> {
-  place_categories?: { category: { id: number; name_ar: string; icon: string | null } }[]
-  place_services?: { name_ar: string; description_ar: string | null }[]
+  place_categories?: PlaceCategoryWithCategory[];
+  place_services?: { name_ar: string; description_ar: string | null }[];
 }
 
 interface PendingOffer extends Offer {
-  place?: { id: string; name_ar: string; place_type: 'shop' | 'person'; image_url: string | null }
+  place?: { id: string; name_ar: string; place_type: 'shop' | 'person'; image_url: string | null };
 }
 
 export default function AdminDashboardScreen() {
-  const insets = useSafeAreaInsets()
-  const { user, profile, loading: authLoading } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  
+  const insets = useSafeAreaInsets();
+  const { user, profile, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [stats, setStats] = useState({
     approvedPlaces: 0,
     pendingPlaces: 0,
     totalUsers: 0,
     totalProviders: 0,
     activeOffers: 0,
-  })
-  const [pendingPlaces, setPendingPlaces] = useState<PendingPlace[]>([])
-  const [pendingOffers, setPendingOffers] = useState<PendingOffer[]>([])
-  const [editRequests, setEditRequests] = useState<any[]>([])
-  const [reports, setReports] = useState<any[]>([])
-  const [providers, setProviders] = useState<Profile[]>([])
-  const [showRejectPlaceModal, setShowRejectPlaceModal] = useState(false)
-  const [showRejectOfferModal, setShowRejectOfferModal] = useState(false)
-  const [showRejectEditModal, setShowRejectEditModal] = useState(false)
-  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null)
-  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
-  const [selectedEditRequestId, setSelectedEditRequestId] = useState<string | null>(null)
+  });
+  const [pendingPlaces, setPendingPlaces] = useState<PendingPlace[]>([]);
+  const [pendingOffers, setPendingOffers] = useState<PendingOffer[]>([]);
+  const [editRequests, setEditRequests] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [providers, setProviders] = useState<Profile[]>([]);
+  const [showRejectPlaceModal, setShowRejectPlaceModal] = useState(false);
+  const [showRejectOfferModal, setShowRejectOfferModal] = useState(false);
+  const [showRejectEditModal, setShowRejectEditModal] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+  const [selectedEditRequestId, setSelectedEditRequestId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       await Promise.all([
         fetchStats(),
@@ -62,35 +62,48 @@ export default function AdminDashboardScreen() {
         fetchEditRequests(),
         fetchReports(),
         fetchProviders(),
-      ])
+      ]);
     } catch (error) {
       // Error fetching data - will show empty state
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (!authLoading && user && profile) {
       if (profile.role !== 'admin') {
-        router.replace('/')
-        return
+        router.replace('/');
+        return;
       }
-      fetchData()
+      fetchData();
     }
-  }, [authLoading, user, profile, fetchData])
-
-
+  }, [authLoading, user, profile, fetchData]);
 
   const fetchStats = useCallback(async () => {
     const [approvedRes, pendingRes, usersRes, offersRes] = await Promise.all([
-      supabase.from('places').select('id', { count: 'exact', head: true }).eq('status', 'approved').is('deleted_at', null),
-      supabase.from('places').select('id', { count: 'exact', head: true }).eq('status', 'pending').is('deleted_at', null),
+      supabase
+        .from('places')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'approved')
+        .is('deleted_at', null),
+      supabase
+        .from('places')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .is('deleted_at', null),
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
-      supabase.from('offers').select('id', { count: 'exact', head: true }).eq('status', 'approved').is('deleted_at', null),
-    ])
+      supabase
+        .from('offers')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'approved')
+        .is('deleted_at', null),
+    ]);
 
-    const providersRes = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'provider')
+    const providersRes = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'provider');
 
     setStats({
       approvedPlaces: approvedRes.count || 0,
@@ -98,73 +111,70 @@ export default function AdminDashboardScreen() {
       totalUsers: usersRes.count || 0,
       totalProviders: providersRes.count || 0,
       activeOffers: offersRes.count || 0,
-    })
-  }, [])
+    });
+  }, []);
 
   const fetchPendingPlaces = useCallback(async () => {
     const { data, error } = await supabase
       .from('places')
-      .select('*, place_categories(category:categories(*)), place_services(name_ar, description_ar)')
+      .select(
+        '*, place_categories(category:categories(*)), place_services(name_ar, description_ar)'
+      )
       .eq('status', 'pending')
       .is('deleted_at', null)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true });
 
     if (data && !error) {
-      setPendingPlaces(data as PendingPlace[])
+      setPendingPlaces(data as PendingPlace[]);
     }
-  }, [])
+  }, []);
 
   const fetchPendingOffers = useCallback(async () => {
     const { data, error } = await supabase
       .from('offers')
       .select('*, place:places(id, name_ar, place_type)')
       .eq('status', 'pending')
-      .is('deleted_at', null)
+      .is('deleted_at', null);
 
     if (data && !error) {
-      setPendingOffers(data as PendingOffer[])
+      setPendingOffers(data as PendingOffer[]);
     }
-  }, [])
+  }, []);
 
   const fetchEditRequests = useCallback(async () => {
     const { data, error } = await supabase
       .from('place_edit_requests')
       .select('*, place:places(id, name_ar)')
       .eq('status', 'pending')
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true });
 
     if (data && !error) {
-      setEditRequests(data)
+      setEditRequests(data);
     }
-  }, [])
+  }, []);
 
   const fetchReports = useCallback(async () => {
     const { data, error } = await supabase
       .from('reports')
       .select('*, place:places(id, name_ar)')
-      .eq('status', 'pending')
+      .eq('status', 'pending');
 
     if (data && !error) {
-      setReports(data)
+      setReports(data);
     }
-  }, [])
+  }, []);
 
   const fetchProviders = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'provider')
+    const { data, error } = await supabase.from('profiles').select('*').eq('role', 'provider');
 
     if (data && !error) {
-      setProviders(data)
+      setProviders(data);
     }
-  }, [])
+  }, []);
 
-  const approvePlace = useCallback(async (placeId: string) => {
-    Alert.alert(
-      'تأكيد الموافقة',
-      'هل أنت متأكد من الموافقة على هذا المكان؟',
-      [
+  const approvePlace = useCallback(
+    async (placeId: string) => {
+      Alert.alert('تأكيد الموافقة', 'هل أنت متأكد من الموافقة على هذا المكان؟', [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -172,52 +182,51 @@ export default function AdminDashboardScreen() {
         {
           text: 'موافقة',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               const { error } = await supabase
                 .from('places')
                 .update({ status: 'approved' })
-                .eq('id', placeId)
+                .eq('id', placeId);
 
-              if (error) throw error
+              if (error) throw error;
 
               await supabase.from('audit_log').insert({
                 admin_id: user?.id,
                 action: 'approved_place',
                 target_type: 'place',
                 target_id: placeId,
-              })
+              });
 
-              await fetchPendingPlaces()
-              await fetchStats()
-              Alert.alert('تم', 'تمت الموافقة على المكان')
+              await fetchPendingPlaces();
+              await fetchStats();
+              Alert.alert('تم', 'تمت الموافقة على المكان');
             } catch (error) {
-              console.error('Approve place error:', error)
-              Alert.alert('خطأ', 'فشل الموافقة')
+              console.error('Approve place error:', error);
+              Alert.alert('خطأ', 'فشل الموافقة');
             } finally {
-              setRefreshing(false)
+              setRefreshing(false);
             }
           },
         },
-      ]
-    )
-  }, [user, fetchPendingPlaces, fetchStats])
+      ]);
+    },
+    [user, fetchPendingPlaces, fetchStats]
+  );
 
   const rejectPlace = useCallback(async (placeId: string) => {
-    setSelectedPlaceId(placeId)
-    setShowRejectPlaceModal(true)
-  }, [])
+    setSelectedPlaceId(placeId);
+    setShowRejectPlaceModal(true);
+  }, []);
 
-  const handleRejectPlaceSubmit = useCallback(async (reason: string) => {
-    if (!reason || !selectedPlaceId) {
-      Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
-      return
-    }
+  const handleRejectPlaceSubmit = useCallback(
+    async (reason: string) => {
+      if (!reason || !selectedPlaceId) {
+        Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض');
+        return;
+      }
 
-    Alert.alert(
-      'تأكيد الرفض',
-      `هل أنت متأكد من رفض هذا المكان؟ السبب: ${reason}`,
-      [
+      Alert.alert('تأكيد الرفض', `هل أنت متأكد من رفض هذا المكان؟ السبب: ${reason}`, [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -226,43 +235,42 @@ export default function AdminDashboardScreen() {
           text: 'رفض',
           style: 'destructive',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               const { error } = await supabase
                 .from('places')
                 .update({ status: 'rejected', admin_note: reason })
-                .eq('id', selectedPlaceId)
+                .eq('id', selectedPlaceId);
 
-              if (error) throw error
+              if (error) throw error;
 
               await supabase.from('audit_log').insert({
                 admin_id: user?.id,
                 action: 'rejected_place',
                 target_type: 'place',
                 target_id: selectedPlaceId,
-              })
+              });
 
-              await fetchPendingPlaces()
-              await fetchStats()
-              Alert.alert('تم', 'تم رفض المكان')
+              await fetchPendingPlaces();
+              await fetchStats();
+              Alert.alert('تم', 'تم رفض المكان');
             } catch (error) {
-              console.error('Reject place error:', error)
-              Alert.alert('خطأ', 'فشل الرفض')
+              console.error('Reject place error:', error);
+              Alert.alert('خطأ', 'فشل الرفض');
             } finally {
-              setRefreshing(false)
-              setSelectedPlaceId(null)
+              setRefreshing(false);
+              setSelectedPlaceId(null);
             }
           },
         },
-      ]
-    )
-  }, [user, selectedPlaceId, fetchPendingPlaces, fetchStats])
+      ]);
+    },
+    [user, selectedPlaceId, fetchPendingPlaces, fetchStats]
+  );
 
-  const approveOffer = useCallback(async (offerId: string) => {
-    Alert.alert(
-      'تأكيد الموافقة',
-      'هل أنت متأكد من الموافقة على هذا العرض؟',
-      [
+  const approveOffer = useCallback(
+    async (offerId: string) => {
+      Alert.alert('تأكيد الموافقة', 'هل أنت متأكد من الموافقة على هذا العرض؟', [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -270,51 +278,50 @@ export default function AdminDashboardScreen() {
         {
           text: 'موافقة',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               const { error } = await supabase
                 .from('offers')
                 .update({ status: 'approved' })
-                .eq('id', offerId)
+                .eq('id', offerId);
 
-              if (error) throw error
+              if (error) throw error;
 
               await supabase.from('audit_log').insert({
                 admin_id: user?.id,
                 action: 'approved_offer',
                 target_type: 'offer',
                 target_id: offerId,
-              })
+              });
 
-              await fetchPendingOffers()
-              Alert.alert('تم', 'تمت الموافقة على العرض')
+              await fetchPendingOffers();
+              Alert.alert('تم', 'تمت الموافقة على العرض');
             } catch (error) {
-              console.error('Approve offer error:', error)
-              Alert.alert('خطأ', 'فشل الموافقة')
+              console.error('Approve offer error:', error);
+              Alert.alert('خطأ', 'فشل الموافقة');
             } finally {
-              setRefreshing(false)
+              setRefreshing(false);
             }
           },
         },
-      ]
-    )
-  }, [user, fetchPendingOffers])
+      ]);
+    },
+    [user, fetchPendingOffers]
+  );
 
   const rejectOffer = useCallback(async (offerId: string) => {
-    setSelectedOfferId(offerId)
-    setShowRejectOfferModal(true)
-  }, [])
+    setSelectedOfferId(offerId);
+    setShowRejectOfferModal(true);
+  }, []);
 
-  const handleRejectOfferSubmit = useCallback(async (reason: string) => {
-    if (!reason || !selectedOfferId) {
-      Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
-      return
-    }
+  const handleRejectOfferSubmit = useCallback(
+    async (reason: string) => {
+      if (!reason || !selectedOfferId) {
+        Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض');
+        return;
+      }
 
-    Alert.alert(
-      'تأكيد الرفض',
-      `هل أنت متأكد من رفض هذا العرض؟ السبب: ${reason}`,
-      [
+      Alert.alert('تأكيد الرفض', `هل أنت متأكد من رفض هذا العرض؟ السبب: ${reason}`, [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -323,42 +330,41 @@ export default function AdminDashboardScreen() {
           text: 'رفض',
           style: 'destructive',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               const { error } = await supabase
                 .from('offers')
                 .update({ status: 'rejected' })
-                .eq('id', selectedOfferId)
+                .eq('id', selectedOfferId);
 
-              if (error) throw error
+              if (error) throw error;
 
               await supabase.from('audit_log').insert({
                 admin_id: user?.id,
                 action: 'rejected_offer',
                 target_type: 'offer',
                 target_id: selectedOfferId,
-              })
+              });
 
-              await fetchPendingOffers()
-              Alert.alert('تم', 'تم رفض العرض')
+              await fetchPendingOffers();
+              Alert.alert('تم', 'تم رفض العرض');
             } catch (error) {
-              console.error('Reject offer error:', error)
-              Alert.alert('خطأ', 'فشل الرفض')
+              console.error('Reject offer error:', error);
+              Alert.alert('خطأ', 'فشل الرفض');
             } finally {
-              setRefreshing(false)
-              setSelectedOfferId(null)
+              setRefreshing(false);
+              setSelectedOfferId(null);
             }
           },
         },
-      ]
-    )
-  }, [user, selectedOfferId, fetchPendingOffers])
+      ]);
+    },
+    [user, selectedOfferId, fetchPendingOffers]
+  );
 
-  const markReportReviewed = useCallback(async (reportId: string) => {
-    Alert.alert(
-      'تأكيد المراجعة',
-      'هل أنت متأكد من مراجعة هذا البلاغ؟',
-      [
+  const markReportReviewed = useCallback(
+    async (reportId: string) => {
+      Alert.alert('تأكيد المراجعة', 'هل أنت متأكد من مراجعة هذا البلاغ؟', [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -366,39 +372,38 @@ export default function AdminDashboardScreen() {
         {
           text: 'مراجعة',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               const { error } = await supabase
                 .from('reports')
                 .update({ status: 'reviewed' })
-                .eq('id', reportId)
+                .eq('id', reportId);
 
-              if (error) throw error
+              if (error) throw error;
 
-              await fetchReports()
-              Alert.alert('تم', 'تم مراجعة البلاغ')
+              await fetchReports();
+              Alert.alert('تم', 'تم مراجعة البلاغ');
             } catch (error) {
-              console.error('Mark report reviewed error:', error)
-              Alert.alert('خطأ', 'فشل المراجعة')
+              console.error('Mark report reviewed error:', error);
+              Alert.alert('خطأ', 'فشل المراجعة');
             } finally {
-              setRefreshing(false)
+              setRefreshing(false);
             }
           },
         },
-      ]
-    )
-  }, [fetchReports])
+      ]);
+    },
+    [fetchReports]
+  );
 
-  const toggleBan = useCallback(async (providerId: string, currentStatus: boolean) => {
-    const action = currentStatus ? 'إلغاء الحظر' : 'حظر'
-    const message = currentStatus 
-      ? 'هل أنت متأكد من إلغاء حظر هذا المزود؟'
-      : 'هل أنت متأكد من حظر هذا المزود؟ لن يتمكن من إضافة أو تعديل الأماكن.'
+  const toggleBan = useCallback(
+    async (providerId: string, currentStatus: boolean) => {
+      const action = currentStatus ? 'إلغاء الحظر' : 'حظر';
+      const message = currentStatus
+        ? 'هل أنت متأكد من إلغاء حظر هذا المزود؟'
+        : 'هل أنت متأكد من حظر هذا المزود؟ لن يتمكن من إضافة أو تعديل الأماكن.';
 
-    Alert.alert(
-      `تأكيد ${action}`,
-      message,
-      [
+      Alert.alert(`تأكيد ${action}`, message, [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -407,34 +412,33 @@ export default function AdminDashboardScreen() {
           text: action,
           style: currentStatus ? 'default' : 'destructive',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               const { error } = await supabase
                 .from('profiles')
                 .update({ is_banned: !currentStatus })
-                .eq('id', providerId)
+                .eq('id', providerId);
 
-              if (error) throw error
+              if (error) throw error;
 
-              await fetchProviders()
-              Alert.alert('تم', currentStatus ? 'تم إلغاء الحظر' : 'تم حظر المزود')
+              await fetchProviders();
+              Alert.alert('تم', currentStatus ? 'تم إلغاء الحظر' : 'تم حظر المزود');
             } catch (error) {
-              console.error('Ban toggle error:', error)
-              Alert.alert('خطأ', 'فشل التحديث')
+              console.error('Ban toggle error:', error);
+              Alert.alert('خطأ', 'فشل التحديث');
             } finally {
-              setRefreshing(false)
+              setRefreshing(false);
             }
           },
         },
-      ]
-    )
-  }, [fetchProviders])
+      ]);
+    },
+    [fetchProviders]
+  );
 
-  const approveEditRequest = useCallback(async (requestId: string, placeId: string, fieldName: string, newValue: string) => {
-    Alert.alert(
-      'تأكيد الموافقة',
-      'هل أنت متأكد من الموافقة على هذا التعديل؟',
-      [
+  const approveEditRequest = useCallback(
+    async (requestId: string, placeId: string, fieldName: string, newValue: string) => {
+      Alert.alert('تأكيد الموافقة', 'هل أنت متأكد من الموافقة على هذا التعديل؟', [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -442,32 +446,32 @@ export default function AdminDashboardScreen() {
         {
           text: 'موافقة',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               // Update the place field
               if (fieldName === 'category_ids') {
                 // Handle category_ids separately
-                const newCategoryIds = JSON.parse(newValue)
-                await supabase.from('place_categories').delete().eq('place_id', placeId)
+                const newCategoryIds = JSON.parse(newValue);
+                await supabase.from('place_categories').delete().eq('place_id', placeId);
                 for (const categoryId of newCategoryIds) {
                   await supabase.from('place_categories').insert({
                     place_id: placeId,
                     category_id: categoryId,
-                  })
+                  });
                 }
               } else {
                 // Update simple field
                 await supabase
                   .from('places')
                   .update({ [fieldName]: newValue })
-                  .eq('id', placeId)
+                  .eq('id', placeId);
               }
 
               // Update request status
               await supabase
                 .from('place_edit_requests')
                 .update({ status: 'approved' })
-                .eq('id', requestId)
+                .eq('id', requestId);
 
               // Insert audit log
               await supabase.from('audit_log').insert({
@@ -475,37 +479,36 @@ export default function AdminDashboardScreen() {
                 action: 'approved_edit_request',
                 target_type: 'place_edit_request',
                 target_id: requestId,
-              })
+              });
 
-              await fetchEditRequests()
-              Alert.alert('تم', 'تمت الموافقة على التعديل')
+              await fetchEditRequests();
+              Alert.alert('تم', 'تمت الموافقة على التعديل');
             } catch (error) {
-              console.error('Approve edit request error:', error)
-              Alert.alert('خطأ', 'فشل الموافقة')
+              console.error('Approve edit request error:', error);
+              Alert.alert('خطأ', 'فشل الموافقة');
             } finally {
-              setRefreshing(false)
+              setRefreshing(false);
             }
           },
         },
-      ]
-    )
-  }, [user, fetchEditRequests])
+      ]);
+    },
+    [user, fetchEditRequests]
+  );
 
   const rejectEditRequest = useCallback(async (requestId: string) => {
-    setSelectedEditRequestId(requestId)
-    setShowRejectEditModal(true)
-  }, [])
+    setSelectedEditRequestId(requestId);
+    setShowRejectEditModal(true);
+  }, []);
 
-  const handleRejectEditSubmit = useCallback(async (reason: string) => {
-    if (!reason || !selectedEditRequestId) {
-      Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
-      return
-    }
+  const handleRejectEditSubmit = useCallback(
+    async (reason: string) => {
+      if (!reason || !selectedEditRequestId) {
+        Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض');
+        return;
+      }
 
-    Alert.alert(
-      'تأكيد الرفض',
-      `هل أنت متأكد من رفض هذا التعديل؟ السبب: ${reason}`,
-      [
+      Alert.alert('تأكيد الرفض', `هل أنت متأكد من رفض هذا التعديل؟ السبب: ${reason}`, [
         {
           text: 'إلغاء',
           style: 'cancel',
@@ -514,34 +517,35 @@ export default function AdminDashboardScreen() {
           text: 'رفض',
           style: 'destructive',
           onPress: async () => {
-            setRefreshing(true)
+            setRefreshing(true);
             try {
               await supabase
                 .from('place_edit_requests')
                 .update({ status: 'rejected' })
-                .eq('id', selectedEditRequestId)
+                .eq('id', selectedEditRequestId);
 
               await supabase.from('audit_log').insert({
                 admin_id: user?.id,
                 action: 'rejected_edit_request',
                 target_type: 'place_edit_request',
                 target_id: selectedEditRequestId,
-              })
+              });
 
-              await fetchEditRequests()
-              Alert.alert('تم', 'تم رفض التعديل')
+              await fetchEditRequests();
+              Alert.alert('تم', 'تم رفض التعديل');
             } catch (error) {
-              console.error('Reject edit request error:', error)
-              Alert.alert('خطأ', 'فشل الرفض')
+              console.error('Reject edit request error:', error);
+              Alert.alert('خطأ', 'فشل الرفض');
             } finally {
-              setRefreshing(false)
-              setSelectedEditRequestId(null)
+              setRefreshing(false);
+              setSelectedEditRequestId(null);
             }
           },
         },
-      ]
-    )
-  }, [user, selectedEditRequestId, fetchEditRequests])
+      ]);
+    },
+    [user, selectedEditRequestId, fetchEditRequests]
+  );
 
   const getFieldLabel = useCallback((fieldName: string) => {
     const labels: Record<string, string> = {
@@ -551,34 +555,34 @@ export default function AdminDashboardScreen() {
       whatsapp: 'رقم واتساب',
       description_ar: 'الوصف',
       image_url: 'الصورة',
-    }
-    return labels[fieldName] || fieldName
-  }, [])
+    };
+    return labels[fieldName] || fieldName;
+  }, []);
 
   const formatValue = useCallback((value: string, fieldName: string) => {
     if (fieldName === 'category_ids') {
       try {
-        const ids = JSON.parse(value)
-        return `${ids.length} تصنيف`
+        const ids = JSON.parse(value);
+        return `${ids.length} تصنيف`;
       } catch {
-        return value
+        return value;
       }
     }
-    return value || '-'
-  }, [])
+    return value || '-';
+  }, []);
 
   const getTimeAgo = useCallback((dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffHours / 24)
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
 
     if (diffDays > 0) {
-      return `منذ ${diffDays} يوم`
+      return `منذ ${diffDays} يوم`;
     }
-    return `منذ ${diffHours} ساعة`
-  }, [])
+    return `منذ ${diffHours} ساعة`;
+  }, []);
 
   if (authLoading || loading) {
     return (
@@ -596,7 +600,12 @@ export default function AdminDashboardScreen() {
           ))}
         </View>
         <View style={styles.section}>
-          <Skeleton width={150} height={18} borderRadius={4} style={{ marginBottom: 12, paddingHorizontal: 16 }} />
+          <Skeleton
+            width={150}
+            height={18}
+            borderRadius={4}
+            style={{ marginBottom: 12, paddingHorizontal: 16 }}
+          />
           {[1, 2, 3].map((i) => (
             <View key={i} style={[styles.card, { marginHorizontal: 16, marginBottom: 12 }]}>
               <Skeleton width={200} height={16} borderRadius={4} style={{ marginBottom: 8 }} />
@@ -605,7 +614,7 @@ export default function AdminDashboardScreen() {
           ))}
         </View>
       </View>
-    )
+    );
   }
   return (
     <ScrollView
@@ -661,8 +670,8 @@ export default function AdminDashboardScreen() {
           </View>
         ) : (
           pendingPlaces.map((place) => {
-            const category = place.place_categories?.[0]?.category
-            const services = place.place_services || []
+            const category = place.place_categories?.[0]?.category;
+            const services = place.place_services || [];
 
             return (
               <View key={place.id} style={styles.card}>
@@ -724,7 +733,7 @@ export default function AdminDashboardScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-            )
+            );
           })
         )}
       </View>
@@ -747,11 +756,7 @@ export default function AdminDashboardScreen() {
           pendingOffers.map((offer) => (
             <View key={offer.id} style={styles.card}>
               <Text style={styles.cardTitle}>{offer.title_ar}</Text>
-              {offer.place && (
-                <Text style={styles.cardCategory}>
-                  🏪 {offer.place.name_ar}
-                </Text>
-              )}
+              {offer.place && <Text style={styles.cardCategory}>🏪 {offer.place.name_ar}</Text>}
               {offer.expires_at && (
                 <Text style={styles.cardTime}>
                   ينتهي: {new Date(offer.expires_at).toLocaleDateString('ar-EG')}
@@ -803,24 +808,33 @@ export default function AdminDashboardScreen() {
           editRequests.map((request) => (
             <View key={request.id} style={styles.card}>
               <Text style={styles.cardTitle}>{request.place?.name_ar || 'مكان محذوف'}</Text>
-              <Text style={styles.cardCategory}>
-                الحقل: {getFieldLabel(request.field_name)}
-              </Text>
+              <Text style={styles.cardCategory}>الحقل: {getFieldLabel(request.field_name)}</Text>
               <View style={styles.changeContainer}>
                 <View style={styles.changeBox}>
                   <Text style={styles.changeLabel}>القيمة الحالية:</Text>
-                  <Text style={styles.changeValue}>{formatValue(request.old_value, request.field_name)}</Text>
+                  <Text style={styles.changeValue}>
+                    {formatValue(request.old_value, request.field_name)}
+                  </Text>
                 </View>
                 <Ionicons name="arrow-back" size={20} color="#1B4332" />
                 <View style={styles.changeBox}>
                   <Text style={styles.changeLabel}>القيمة الجديدة:</Text>
-                  <Text style={styles.changeValue}>{formatValue(request.new_value, request.field_name)}</Text>
+                  <Text style={styles.changeValue}>
+                    {formatValue(request.new_value, request.field_name)}
+                  </Text>
                 </View>
               </View>
               <View style={styles.cardActions}>
                 <TouchableOpacity
                   style={styles.approveButton}
-                  onPress={() => approveEditRequest(request.id, request.place_id, request.field_name, request.new_value)}
+                  onPress={() =>
+                    approveEditRequest(
+                      request.id,
+                      request.place_id,
+                      request.field_name,
+                      request.new_value
+                    )
+                  }
                   disabled={refreshing}
                 >
                   <Ionicons name="checkmark" size={18} color="#FFFFFF" />
@@ -884,10 +898,7 @@ export default function AdminDashboardScreen() {
               </View>
               <Text style={styles.cardPhone}>📱 {provider.phone}</Text>
               <TouchableOpacity
-                style={[
-                  styles.banButton,
-                  provider.is_banned ? styles.unbanButton : null,
-                ]}
+                style={[styles.banButton, provider.is_banned ? styles.unbanButton : null]}
                 onPress={() => toggleBan(provider.id, provider.is_banned)}
                 disabled={refreshing}
               >
@@ -929,7 +940,7 @@ export default function AdminDashboardScreen() {
         onCancel={() => setShowRejectEditModal(false)}
       />
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -1215,5 +1226,4 @@ const styles = StyleSheet.create({
   footer: {
     height: 20,
   },
-})
-
+});

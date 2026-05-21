@@ -1,11 +1,11 @@
-import { MMKV } from 'react-native-mmkv'
+import { MMKV } from 'react-native-mmkv';
 
-let storage: MMKV | null = null
+let storage: MMKV | null = null;
 
 try {
-  storage = new MMKV({ id: 'sahibak-storage' })
+  storage = new MMKV({ id: 'sahibak-storage' });
 } catch (e) {
-  console.warn('MMKV not available:', e)
+  console.warn('MMKV not available:', e);
 }
 
-export { storage }
+export { storage };

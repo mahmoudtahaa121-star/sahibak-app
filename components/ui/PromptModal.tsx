@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,16 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface PromptModalProps {
-  visible: boolean
-  title: string
-  message?: string
-  placeholder?: string
-  onSubmit: (text: string) => void
-  onCancel: () => void
+  visible: boolean;
+  title: string;
+  message?: string;
+  placeholder?: string;
+  onSubmit: (text: string) => void;
+  onCancel: () => void;
 }
 
 export default function PromptModal({
@@ -28,32 +28,27 @@ export default function PromptModal({
   onSubmit,
   onCancel,
 }: PromptModalProps) {
-  const insets = useSafeAreaInsets()
-  const [text, setText] = useState('')
+  const insets = useSafeAreaInsets();
+  const [text, setText] = useState('');
 
   useEffect(() => {
     if (visible) {
-      setText('')
+      setText('');
     }
-  }, [visible])
+  }, [visible]);
 
   const handleSubmit = () => {
-    onSubmit(text)
-    setText('')
-  }
+    onSubmit(text);
+    setText('');
+  };
 
   const handleCancel = () => {
-    onCancel()
-    setText('')
-  }
+    onCancel();
+    setText('');
+  };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleCancel}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleCancel}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -71,16 +66,10 @@ export default function PromptModal({
               autoFocus
             />
             <View style={styles.buttons}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={handleCancel}
-              >
+              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
                 <Text style={styles.cancelButtonText}>إلغاء</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.submitButton]}
-                onPress={handleSubmit}
-              >
+              <TouchableOpacity style={[styles.button, styles.submitButton]} onPress={handleSubmit}>
                 <Text style={styles.submitButtonText}>إرسال</Text>
               </TouchableOpacity>
             </View>
@@ -88,7 +77,7 @@ export default function PromptModal({
         </View>
       </KeyboardAvoidingView>
     </Modal>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -169,4 +158,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
   },
-})
+});

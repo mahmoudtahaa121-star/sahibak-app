@@ -1,48 +1,48 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native';
 
-type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'default'
+type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'default';
 
 interface BadgeProps {
-  label: string
-  variant?: BadgeVariant
+  label: string;
+  variant?: BadgeVariant;
 }
 
 export default function Badge({ label, variant = 'default' }: BadgeProps) {
   const getBadgeStyle = () => {
     switch (variant) {
       case 'success':
-        return [styles.badge, styles.success]
+        return [styles.badge, styles.success];
       case 'warning':
-        return [styles.badge, styles.warning]
+        return [styles.badge, styles.warning];
       case 'danger':
-        return [styles.badge, styles.danger]
+        return [styles.badge, styles.danger];
       case 'info':
-        return [styles.badge, styles.info]
+        return [styles.badge, styles.info];
       default:
-        return [styles.badge, styles.defaultBadge]
+        return [styles.badge, styles.defaultBadge];
     }
-  }
+  };
 
   const getTextStyle = () => {
     switch (variant) {
       case 'success':
-        return styles.successText
+        return styles.successText;
       case 'warning':
-        return styles.warningText
+        return styles.warningText;
       case 'danger':
-        return styles.dangerText
+        return styles.dangerText;
       case 'info':
-        return styles.infoText
+        return styles.infoText;
       default:
-        return styles.defaultText
+        return styles.defaultText;
     }
-  }
+  };
 
   return (
     <View style={getBadgeStyle()}>
       <Text style={getTextStyle()}>{label}</Text>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -91,4 +91,4 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6C757D',
   },
-})
+});

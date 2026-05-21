@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -10,71 +10,70 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useLocalSearchParams, router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { supabase } from '../../lib/supabase'
-import { isValidEgyptianPhone, isValidPassword, isValidEmail } from '../../utils/validation'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
+import { isValidEgyptianPhone, isValidPassword, isValidEmail } from '../../utils/validation';
 
-type Role = 'user' | 'provider'
+type Role = 'user' | 'provider';
 
 export default function RegisterScreen() {
-  const insets = useSafeAreaInsets()
-  const { redirect } = useLocalSearchParams<{ redirect?: string }>()
-  const [role, setRole] = useState<Role | null>(null)
-  const [fullName, setFullName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const insets = useSafeAreaInsets();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const [role, setRole] = useState<Role | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleBack = () => {
     // Redirect to the intended page or home if not specified
-    const targetPath = redirect || '/'
-    router.replace(targetPath)
-  }
+    const targetPath = redirect || '/';
+    router.replace(targetPath);
+  };
 
-const handleRegister = async () => {
-  if (!role) {
-    Alert.alert('خطأ', 'الرجاء اختيار نوع الحساب');
-    return;
-  }
-  if (!fullName.trim()) {
-    Alert.alert('خطأ', 'الرجاء إدخال الاسم الكامل');
-    return;
-  }
-  if (!phone.trim()) {
-    Alert.alert('خطأ', 'الرجاء إدخال رقم الهاتف');
-    return;
-  }
-  if (!isValidEgyptianPhone(phone.trim())) {
-    Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح');
-    return;
-  }
-  if (!email.trim()) {
-    Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
-    return;
-  }
-  if (!isValidEmail(email.trim())) {
-    Alert.alert('خطأ', 'البريد الإلكتروني غير صالح');
-    return;
-  }
-  if (!password) {
-    Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور');
-    return;
-  }
-  if (!isValidPassword(password)) {
-    Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على أرقام وحروف');
-    return;
-  }
+  const handleRegister = async () => {
+    if (!role) {
+      Alert.alert('خطأ', 'الرجاء اختيار نوع الحساب');
+      return;
+    }
+    if (!fullName.trim()) {
+      Alert.alert('خطأ', 'الرجاء إدخال الاسم الكامل');
+      return;
+    }
+    if (!phone.trim()) {
+      Alert.alert('خطأ', 'الرجاء إدخال رقم الهاتف');
+      return;
+    }
+    if (!isValidEgyptianPhone(phone.trim())) {
+      Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح');
+      return;
+    }
+    if (!email.trim()) {
+      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
+      return;
+    }
+    if (!isValidEmail(email.trim())) {
+      Alert.alert('خطأ', 'البريد الإلكتروني غير صالح');
+      return;
+    }
+    if (!password) {
+      Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور');
+      return;
+    }
+    if (!isValidPassword(password)) {
+      Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على أرقام وحروف');
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    // 1️⃣ Sign Up with metadata to store role and phone temporarily
-    const { data: authData, error: authError } =
-      await supabase.auth.signUp({
+    try {
+      // 1️⃣ Sign Up with metadata to store role and phone temporarily
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -86,44 +85,43 @@ const handleRegister = async () => {
         },
       });
 
-    if (authError) {
-      console.error('Auth signup error:', authError);
-      Alert.alert('خطأ', `فشل التسجيل: ${authError.message}`);
-      return;
-    }
+      if (authError) {
+        console.error('Auth signup error:', authError);
+        Alert.alert('خطأ', `فشل التسجيل: ${authError.message}`);
+        return;
+      }
 
-    const user = authData?.user;
-    const session = authData?.session;
+      const user = authData?.user;
+      const session = authData?.session;
 
-    if (!user) {
-      Alert.alert('خطأ', 'لم يتم إنشاء المستخدم');
-      return;
-    }
+      if (!user) {
+        Alert.alert('خطأ', 'لم يتم إنشاء المستخدم');
+        return;
+      }
 
-    // 2️⃣ If session exists (email confirmation disabled), upsert profile
-    // (handle_new_user trigger may have already created it — upsert is safe either way)
-    if (session) {
-      try {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            full_name: fullName.trim(),
-            phone: phone.trim(),
-            role,
-            is_banned: false,
-            warning_count: 0,
-            ban_reason: null,
-            banned_at: null,
-          }, { onConflict: 'id' });
+      // 2️⃣ If session exists (email confirmation disabled), upsert profile
+      // (handle_new_user trigger may have already created it — upsert is safe either way)
+      if (session) {
+        try {
+          const { error: profileError } = await supabase.from('profiles').upsert(
+            {
+              id: user.id,
+              full_name: fullName.trim(),
+              phone: phone.trim(),
+              role,
+              is_banned: false,
+              warning_count: 0,
+              ban_reason: null,
+              banned_at: null,
+            },
+            { onConflict: 'id' }
+          );
 
-        if (profileError) {
-          console.error('Profile upsert error:', profileError);
-          
-          // Try insert instead if upsert fails
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
+          if (profileError) {
+            console.error('Profile upsert error:', profileError);
+
+            // Try insert instead if upsert fails
+            const { error: insertError } = await supabase.from('profiles').insert({
               id: user.id,
               full_name: fullName.trim(),
               phone: phone.trim(),
@@ -134,43 +132,43 @@ const handleRegister = async () => {
               banned_at: null,
             });
 
-          if (insertError) {
-            console.error('Profile insert error:', insertError);
-            Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${insertError.message}`);
-            return;
+            if (insertError) {
+              console.error('Profile insert error:', insertError);
+              Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${insertError.message}`);
+              return;
+            }
           }
-        }
 
-        Alert.alert('نجاح', 'تم إنشاء الحساب بنجاح!', [
+          Alert.alert('نجاح', 'تم إنشاء الحساب بنجاح!', [
+            {
+              text: 'حسناً',
+              onPress: () => router.replace(redirect || '/'),
+            },
+          ]);
+        } catch (error) {
+          console.error('Profile creation error:', error);
+          Alert.alert('خطأ', 'حدث خطأ أثناء إنشاء الملف الشخصي');
+          return;
+        }
+      } else {
+        // 3️⃣ No session (email confirmation required) - profile will be created on first login
+        Alert.alert('نجاح', 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتأكيد التسجيل', [
           {
             text: 'حسناً',
-            onPress: () => router.replace(redirect || '/'),
+            onPress: () =>
+              router.replace({
+                pathname: '/auth/login',
+                params: redirect ? { redirect } : undefined,
+              }),
           },
         ]);
-      } catch (error) {
-        console.error('Profile creation error:', error);
-        Alert.alert('خطأ', 'حدث خطأ أثناء إنشاء الملف الشخصي');
-        return;
       }
-    } else {
-      // 3️⃣ No session (email confirmation required) - profile will be created on first login
-      Alert.alert('نجاح', 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتأكيد التسجيل', [
-        {
-          text: 'حسناً',
-          onPress: () => router.replace({
-            pathname: '/auth/login',
-            params: redirect ? { redirect } : undefined
-          }),
-        },
-      ]);
+    } catch (error) {
+      Alert.alert('خطأ', 'حدث خطأ غير متوقع');
+    } finally {
+      setLoading(false);
     }
-
-  } catch (error) {
-    Alert.alert('خطأ', 'حدث خطأ غير متوقع');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <KeyboardAvoidingView
@@ -249,7 +247,12 @@ const handleRegister = async () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#ADB5BD" style={styles.inputIcon} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color="#ADB5BD"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="كلمة المرور"
@@ -273,16 +276,13 @@ const handleRegister = async () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.loginLink}
-          onPress={() => router.push('/auth/login')}
-        >
+        <TouchableOpacity style={styles.loginLink} onPress={() => router.push('/auth/login')}>
           <Text style={styles.loginText}>لديك حساب بالفعل؟</Text>
           <Text style={styles.loginLinkText}>تسجيل الدخول</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -417,6 +417,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1B4332',
   },
-})
-
-
+});

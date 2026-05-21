@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
-import { storage } from '../lib/storage'
-import { supabase } from '../lib/supabase'
+import { useState, useEffect } from 'react';
+import { storage } from '../lib/storage';
+import { supabase } from '../lib/supabase';
 
 export function useArea() {
   const [selectedArea, setSelectedAreaState] = useState<string>(
     storage?.getString('selected_area') ?? 'المنصورية'
-  )
-  const [availableAreas, setAvailableAreas] = useState<string[]>(['المنصورية'])
+  );
+  const [availableAreas, setAvailableAreas] = useState<string[]>(['المنصورية']);
 
   useEffect(() => {
     const fetchAreas = async () => {
@@ -15,39 +15,39 @@ export function useArea() {
           .from('app_config')
           .select('value')
           .eq('key', 'current_area')
-          .single()
+          .single();
 
         if (error) {
-          return
+          return;
         }
 
         if (data?.value) {
-          const areas = data.value.split(',').map((a: string) => a.trim())
-          setAvailableAreas(areas)
+          const areas = data.value.split(',').map((a: string) => a.trim());
+          setAvailableAreas(areas);
 
           if (!areas.includes(selectedArea)) {
-            const newArea = areas[0]
-            setSelectedAreaState(newArea)
+            const newArea = areas[0];
+            setSelectedAreaState(newArea);
             if (storage) {
-              storage.set('selected_area', newArea)
+              storage.set('selected_area', newArea);
             }
           }
         }
       } catch (err) {
-        console.error('Unexpected error:', err)
+        console.error('Unexpected error:', err);
       } // Will use default area
-    }
+    };
 
-    fetchAreas()
-  }, [])
+    fetchAreas();
+  }, []);
 
   const setSelectedArea = (area: string) => {
-    setSelectedAreaState(area)
+    setSelectedAreaState(area);
 
     if (storage) {
-      storage.set('selected_area', area)
+      storage.set('selected_area', area);
     }
-  }
+  };
 
-  return { selectedArea, availableAreas, setSelectedArea }
+  return { selectedArea, availableAreas, setSelectedArea };
 }

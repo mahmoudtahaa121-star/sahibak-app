@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.expo/
+
+# Cache
+.cache/
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Misc
+.DS_Store
+*.pem
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Generated files
+*.generated.*
+*.min.js
+
+# SQL files (have their own formatting)
+*.sql
+
+# Markdown files (keep their own formatting)
+*.md

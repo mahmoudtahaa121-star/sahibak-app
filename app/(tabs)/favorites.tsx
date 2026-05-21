@@ -1,28 +1,35 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
-import { useAuth } from '../../hooks/useAuth'
-import { useFavorites, useToggleFavorite } from '../../hooks/useFavorites'
-import { Place } from '../../types'
-import { Ionicons } from '@expo/vector-icons'
-import PlaceCard from '../../components/place/PlaceCard'
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../hooks/useAuth';
+import { useFavorites, useToggleFavorite } from '../../hooks/useFavorites';
+import { Place } from '../../types';
+import PlaceCard from '../../components/place/PlaceCard';
 
 export default function FavoritesScreen() {
-  const insets = useSafeAreaInsets()
-  const { user, profile } = useAuth()
-  const router = useRouter()
-  const toggleFavorite = useToggleFavorite()
+  const insets = useSafeAreaInsets();
+  const { user, profile } = useAuth();
+  const router = useRouter();
+  const toggleFavorite = useToggleFavorite();
 
-  const { data: favorites, isLoading, refetch } = useFavorites(user?.id)
+  const { data: favorites, isLoading, refetch } = useFavorites(user?.id);
 
   const handleRemoveFavorite = async (placeId: string) => {
-    if (!user) return
+    if (!user) return;
     await toggleFavorite.mutateAsync({
       userId: user.id,
       placeId,
       isFavorite: true,
-    })
-  }
+    });
+  };
 
   if (!user || !profile) {
     return (
@@ -31,12 +38,17 @@ export default function FavoritesScreen() {
           <Text style={styles.emoji}>❤️</Text>
           <Text style={styles.title}>سجّل دخولك لحفظ مفضلاتك</Text>
           <Text style={styles.subtitle}>احفظ الأماكن اللي بتحبها وارجعلها بسهولة</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.replace({ pathname: '/auth/login', params: { redirect: '/(tabs)/favorites' } })}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() =>
+              router.replace({ pathname: '/auth/login', params: { redirect: '/(tabs)/favorites' } })
+            }
+          >
             <Text style={styles.buttonText}>تسجيل الدخول</Text>
           </TouchableOpacity>
         </View>
       </View>
-    )
+    );
   }
 
   if (isLoading) {
@@ -46,7 +58,7 @@ export default function FavoritesScreen() {
           <ActivityIndicator size="large" color="#1B4332" />
         </View>
       </View>
-    )
+    );
   }
 
   if (!favorites || favorites.length === 0) {
@@ -61,7 +73,7 @@ export default function FavoritesScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    )
+    );
   }
 
   return (
@@ -90,7 +102,7 @@ export default function FavoritesScreen() {
         ))}
       </View>
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -194,4 +206,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6C757D',
   },
-})
+});

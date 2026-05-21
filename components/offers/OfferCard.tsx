@@ -1,23 +1,23 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
-import { Offer } from '../../types'
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Offer } from '../../types';
 
 interface OfferCardProps {
-  offer: Offer
-  onPress: () => void
+  offer: Offer;
+  onPress: () => void;
 }
 
 function formatDate(dateString: string | null): string {
-  if (!dateString) return 'بدون تاريخ انتهاء'
-  const date = new Date(dateString)
-  const day = date.getDate().toString().padStart(2, '0')
-  const month = (date.getMonth() + 1).toString().padStart(2, '0')
-  const year = date.getFullYear()
-  return `حتى ${day}/${month}/${year}`
+  if (!dateString) return 'بدون تاريخ انتهاء';
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `حتى ${day}/${month}/${year}`;
 }
 
 export default function OfferCard({ offer, onPress }: OfferCardProps) {
-  const placeTypeBadge = offer.place?.place_type === 'shop' ? '🏪 محل' : '👤 شخص'
-  const isExpired = offer.expires_at && new Date(offer.expires_at) < new Date()
+  const placeTypeBadge = offer.place?.place_type === 'shop' ? '🏪 محل' : '👤 شخص';
+  const isExpired = offer.expires_at && new Date(offer.expires_at) < new Date();
 
   return (
     <TouchableOpacity
@@ -50,7 +50,7 @@ export default function OfferCard({ offer, onPress }: OfferCardProps) {
 
       <Text style={styles.expiry}>⏰ {formatDate(offer.expires_at)}</Text>
     </TouchableOpacity>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -138,4 +138,4 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#ADB5BD',
   },
-})
+});

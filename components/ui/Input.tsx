@@ -1,13 +1,13 @@
-import { View, Text, StyleSheet, TextInput } from 'react-native'
+import { View, Text, StyleSheet, TextInput } from 'react-native';
 
 interface InputProps {
-  label: string
-  value: string
-  onChangeText: (text: string) => void
-  placeholder?: string
-  secureTextEntry?: boolean
-  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad'
-  error?: string
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  secureTextEntry?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  error?: string;
 }
 
 export default function Input({
@@ -34,7 +34,7 @@ export default function Input({
       />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -65,4 +65,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#EF4444',
   },
-})
+});

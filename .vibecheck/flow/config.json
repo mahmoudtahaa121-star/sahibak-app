@@ -7,7 +7,5 @@
   "planningArtifacts": ".vibecheck/flow/planning-artifacts",
   "implementationArtifacts": ".vibecheck/flow/implementation-artifacts",
   "installedAt": "2026-05-19T05:38:36.046Z",
-  "ide": [
-    "claude-code"
-  ]
+  "ide": ["claude-code"]
 }

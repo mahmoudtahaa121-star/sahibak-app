@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,42 +7,46 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useLocalSearchParams, router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { Place } from '../../types'
-import { useArea } from '../../hooks/useArea'
-import { useCategoryPlaces, useCategory } from '../../hooks/useCategoryPlaces'
-import PlaceCard from '../../components/place/PlaceCard'
-import Skeleton from '../../components/ui/Skeleton'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Place } from '../../types';
+import { useArea } from '../../hooks/useArea';
+import { useCategoryPlaces, useCategory } from '../../hooks/useCategoryPlaces';
+import PlaceCard from '../../components/place/PlaceCard';
+import Skeleton from '../../components/ui/Skeleton';
 
-type FilterType = 'all' | 'shop' | 'person'
+type FilterType = 'all' | 'shop' | 'person';
 
 export default function CategoryScreen() {
-  const insets = useSafeAreaInsets()
-  const { id } = useLocalSearchParams<{ id: string }>()
-  const { selectedArea } = useArea()
-  const [filter, setFilter] = useState<FilterType>('all')
-  const [refreshing, setRefreshing] = useState(false)
+  const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { selectedArea } = useArea();
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const { data: category, isLoading: categoryLoading, refetch: refetchCategory } = useCategory(id)
-  const { data: places, isLoading: placesLoading, refetch: refetchPlaces } = useCategoryPlaces(id, selectedArea, filter)
+  const { data: category, isLoading: categoryLoading, refetch: refetchCategory } = useCategory(id);
+  const {
+    data: places,
+    isLoading: placesLoading,
+    refetch: refetchPlaces,
+  } = useCategoryPlaces(id, selectedArea, filter);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true)
-    await Promise.all([refetchCategory(), refetchPlaces()])
-    setRefreshing(false)
-  }, [refetchCategory, refetchPlaces])
+    setRefreshing(true);
+    await Promise.all([refetchCategory(), refetchPlaces()]);
+    setRefreshing(false);
+  }, [refetchCategory, refetchPlaces]);
 
-  const filteredPlaces = places || []
+  const filteredPlaces = places || [];
 
   if (categoryLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator color="#1B4332" size="large" />
       </View>
-    )
+    );
   }
 
   return (
@@ -105,7 +109,13 @@ export default function CategoryScreen() {
         {placesLoading ? (
           <View style={styles.skeletonContainer}>
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} width={350} height={90} borderRadius={14} style={styles.skeletonCard} />
+              <Skeleton
+                key={i}
+                width={350}
+                height={90}
+                borderRadius={14}
+                style={styles.skeletonCard}
+              />
             ))}
           </View>
         ) : filteredPlaces.length === 0 ? (
@@ -125,7 +135,7 @@ export default function CategoryScreen() {
         <View style={styles.footer} />
       </ScrollView>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -222,4 +232,4 @@ const styles = StyleSheet.create({
   footer: {
     height: 20,
   },
-})
+});

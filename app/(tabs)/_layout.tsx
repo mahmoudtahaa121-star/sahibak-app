@@ -1,9 +1,9 @@
-import { Tabs } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
-  const insets = useSafeAreaInsets()
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -40,7 +40,7 @@ export default function TabLayout() {
           tabBarActiveTintColor: '#D4A843',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="pricetag-outline" size={size} color={color} />
-          ), 
+          ),
         }}
       />
       <Tabs.Screen
@@ -48,9 +48,7 @@ export default function TabLayout() {
         options={{
           title: 'المفضلة',
           tabBarActiveTintColor: '#EF4444',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="heart" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -64,5 +62,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  )
+  );
 }

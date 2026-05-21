@@ -1,43 +1,39 @@
-import { useState, useCallback } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import * as Linking from 'expo-linking'
-import Constants from 'expo-constants'
-import { useAuth } from '../../hooks/useAuth'
-import { getRoleBadge } from '../../utils/badges'
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
+import { useAuth } from '../../hooks/useAuth';
+import { getRoleBadge } from '../../utils/badges';
 
 export default function MoreScreen() {
-  const insets = useSafeAreaInsets()
-  const { user, profile, signOut } = useAuth()
-  const [showAboutModal, setShowAboutModal] = useState(false)
-  const version = Constants.expoConfig?.version ?? '1.0.0'
+  const insets = useSafeAreaInsets();
+  const { user, profile, signOut } = useAuth();
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const version = Constants.expoConfig?.version ?? '1.0.0';
 
   const handleAbout = useCallback(() => {
-    setShowAboutModal(true)
-  }, [])
+    setShowAboutModal(true);
+  }, []);
 
   const handleContact = useCallback(() => {
-    Linking.openURL('https://wa.me/201000000000')
-  }, [])
+    Linking.openURL('https://wa.me/201000000000');
+  }, []);
 
   const handleSignOut = useCallback(() => {
-    Alert.alert(
-      'تسجيل الخروج',
-      'هل أنت متأكد من تسجيل الخروج؟',
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        {
-          text: 'نعم',
-          onPress: async () => {
-            await signOut()
-            router.replace('/auth/login')
-          },
+    Alert.alert('تسجيل الخروج', 'هل أنت متأكد من تسجيل الخروج؟', [
+      { text: 'إلغاء', style: 'cancel' },
+      {
+        text: 'نعم',
+        onPress: async () => {
+          await signOut();
+          router.replace('/auth/login');
         },
-      ]
-    )
-  }, [signOut])
+      },
+    ]);
+  }, [signOut]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -62,7 +58,12 @@ export default function MoreScreen() {
             </View>
             <Text style={styles.welcome}>مرحباً بك</Text>
             <Text style={styles.subtitle}>سجّل دخولك للوصول لكل المميزات</Text>
-            <TouchableOpacity style={styles.loginButton} onPress={() => router.replace({ pathname: '/auth/login', params: { redirect: '/(tabs)/more' } })}>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() =>
+                router.replace({ pathname: '/auth/login', params: { redirect: '/(tabs)/more' } })
+              }
+            >
               <Text style={styles.loginButtonText}>تسجيل الدخول / إنشاء حساب</Text>
             </TouchableOpacity>
           </View>
@@ -141,7 +142,7 @@ export default function MoreScreen() {
         </TouchableOpacity>
       </Modal>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -298,4 +299,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#FFFFFF',
   },
-})
+});

@@ -1,13 +1,20 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useParentCategories } from '../../hooks/useCategories'
-import { Category } from '../../types'
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useParentCategories } from '../../hooks/useCategories';
+import { Category } from '../../types';
 
 export default function AllCategoriesScreen() {
-  const insets = useSafeAreaInsets()
-  const { data: categories, isLoading } = useParentCategories()
+  const insets = useSafeAreaInsets();
+  const { data: categories, isLoading } = useParentCategories();
 
   return (
     <View style={styles.container}>
@@ -37,7 +44,9 @@ export default function AllCategoriesScreen() {
                 style={styles.categoryCard}
                 onPress={() => router.push(`/category/${category.id}`)}
               >
-                <View style={[styles.iconContainer, { backgroundColor: category.color || '#1B4332' }]}>
+                <View
+                  style={[styles.iconContainer, { backgroundColor: category.color || '#1B4332' }]}
+                >
                   <Text style={styles.icon}>{category.icon || '📁'}</Text>
                 </View>
                 <Text style={styles.name}>{category.name_ar}</Text>
@@ -48,7 +57,7 @@ export default function AllCategoriesScreen() {
         <View style={styles.footer} />
       </ScrollView>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -124,4 +133,4 @@ const styles = StyleSheet.create({
   footer: {
     height: 20,
   },
-})
+});

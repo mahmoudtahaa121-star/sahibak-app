@@ -1,14 +1,23 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, StyleProp, ViewStyle, TextStyle } from 'react-native'
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 
-type ButtonVariant = 'primary' | 'outline' | 'danger'
+type ButtonVariant = 'primary' | 'outline' | 'danger';
 
 interface ButtonProps {
-  label: string
-  onPress: () => void
-  variant?: ButtonVariant
-  loading?: boolean
-  disabled?: boolean
-  fullWidth?: boolean
+  label: string;
+  onPress: () => void;
+  variant?: ButtonVariant;
+  loading?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
 }
 
 export default function Button({
@@ -20,46 +29,46 @@ export default function Button({
   fullWidth = false,
 }: ButtonProps) {
   const getButtonStyle = (): ViewStyle => {
-    const style: ViewStyle = { ...styles.button }
-    
+    const style: ViewStyle = { ...styles.button };
+
     if (variant === 'primary') {
-      style.backgroundColor = '#1B4332'
+      style.backgroundColor = '#1B4332';
     } else if (variant === 'outline') {
-      style.backgroundColor = 'transparent'
-      style.borderWidth = 2
-      style.borderColor = '#1B4332'
+      style.backgroundColor = 'transparent';
+      style.borderWidth = 2;
+      style.borderColor = '#1B4332';
     } else if (variant === 'danger') {
-      style.backgroundColor = '#C62828'
+      style.backgroundColor = '#C62828';
     }
 
     if (fullWidth) {
-      style.width = '100%'
+      style.width = '100%';
     }
 
     if (disabled || loading) {
-      style.opacity = 0.5
+      style.opacity = 0.5;
     }
 
-    return style
-  }
+    return style;
+  };
 
   const getTextStyle = (): TextStyle => {
-    const style: TextStyle = { ...styles.text }
+    const style: TextStyle = { ...styles.text };
 
     if (variant === 'primary') {
-      style.color = '#FFFFFF'
+      style.color = '#FFFFFF';
     } else if (variant === 'outline') {
-      style.color = '#1B4332'
+      style.color = '#1B4332';
     } else if (variant === 'danger') {
-      style.color = '#FFFFFF'
+      style.color = '#FFFFFF';
     }
 
     if (disabled || loading) {
-      style.color = '#ADB5BD'
+      style.color = '#ADB5BD';
     }
 
-    return style
-  }
+    return style;
+  };
 
   return (
     <TouchableOpacity
@@ -74,7 +83,7 @@ export default function Button({
         <Text style={getTextStyle()}>{label}</Text>
       )}
     </TouchableOpacity>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -90,4 +99,4 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_700Bold',
     fontSize: 16,
   },
-})
+});

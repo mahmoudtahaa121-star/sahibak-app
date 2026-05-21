@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,88 +10,93 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native'
-import { useLocalSearchParams, router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useAuth } from '../../../hooks/useAuth'
-import { supabase } from '../../../lib/supabase'
-import { Category, Place, PlaceService } from '../../../types'
-import { isValidEgyptianPhone } from '../../../utils/validation'
+} from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../../hooks/useAuth';
+import { supabase } from '../../../lib/supabase';
+import { Category, Place, PlaceCategory, PlaceService } from '../../../types';
+import { isValidEgyptianPhone } from '../../../utils/validation';
 
-type Step = 1 | 2 | 3 | 4
-type PlaceType = 'shop' | 'person'
+type Step = 1 | 2 | 3 | 4;
+type PlaceType = 'shop' | 'person';
 
 interface Service {
-  id: string
-  name_ar: string
-  description_ar: string
+  id: string;
+  name_ar: string;
+  description_ar: string;
 }
 
 export default function EditPlaceScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
-  const { user } = useAuth()
-  const [step, setStep] = useState<Step>(1)
-  const [loading, setLoading] = useState(false)
-  const [initialLoading, setInitialLoading] = useState(true)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [selectedParent, setSelectedParent] = useState<Category | null>(null)
-  
-  const [placeType, setPlaceType] = useState<PlaceType | null>(null)
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([])
-  const [nameAr, setNameAr] = useState('')
-  const [phone, setPhone] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
-  const [descriptionAr, setDescriptionAr] = useState('')
-  const [addressText, setAddressText] = useState('')
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
+  const [step, setStep] = useState<Step>(1);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedParent, setSelectedParent] = useState<Category | null>(null);
+
+  const [placeType, setPlaceType] = useState<PlaceType | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [nameAr, setNameAr] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [descriptionAr, setDescriptionAr] = useState('');
+  const [addressText, setAddressText] = useState('');
   const [services, setServices] = useState<Service[]>([
-    { id: '1', name_ar: '', description_ar: '' }
-  ])
+    { id: '1', name_ar: '', description_ar: '' },
+  ]);
 
   // Track original values to detect changes
   const [originalData, setOriginalData] = useState<{
-    name_ar: string
-    phone: string
-    whatsapp: string | null
-    description_ar: string | null
-    categoryIds: number[]
-    services: Service[]
-  } | null>(null)
+    name_ar: string;
+    phone: string;
+    whatsapp: string | null;
+    description_ar: string | null;
+    categoryIds: number[];
+    services: Service[];
+  } | null>(null);
 
   useEffect(() => {
-    fetchPlaceData()
-    fetchCategories()
-  }, [id])
+    fetchPlaceData();
+    fetchCategories();
+  }, [id]);
 
   const fetchPlaceData = async () => {
-    if (!id) return
-    
-    setInitialLoading(true)
+    if (!id) return;
+
+    setInitialLoading(true);
     try {
       const { data: place, error } = await supabase
         .from('places')
         .select('*, place_categories(category_id), place_services(*)')
         .eq('id', id)
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) throw error;
 
-      setPlaceType(place.place_type)
-      setNameAr(place.name_ar || '')
-      setPhone(place.phone || '')
-      setWhatsapp(place.whatsapp || '')
-      setDescriptionAr(place.description_ar || '')
-      setAddressText(place.address_text || '')
+      setPlaceType(place.place_type);
+      setNameAr(place.name_ar || '');
+      setPhone(place.phone || '');
+      setWhatsapp(place.whatsapp || '');
+      setDescriptionAr(place.description_ar || '');
+      setAddressText(place.address_text || '');
 
-      const categoryIds = place.place_categories?.map((pc: any) => pc.category_id) || []
-      setSelectedCategories(categoryIds)
+      const categoryIds = place.place_categories?.map((pc: PlaceCategory) => pc.category_id) || [];
+      setSelectedCategories(categoryIds);
 
-      const existingServices = place.place_services?.map((ps: PlaceService) => ({
-        id: ps.id,
-        name_ar: ps.name_ar,
-        description_ar: ps.description_ar || '',
-      })) || []
-      
-      setServices(existingServices.length > 0 ? existingServices : [{ id: '1', name_ar: '', description_ar: '' }])
+      const existingServices =
+        place.place_services?.map((ps: PlaceService) => ({
+          id: ps.id,
+          name_ar: ps.name_ar,
+          description_ar: ps.description_ar || '',
+        })) || [];
+
+      setServices(
+        existingServices.length > 0
+          ? existingServices
+          : [{ id: '1', name_ar: '', description_ar: '' }]
+      );
 
       // Store original values for change detection
       setOriginalData({
@@ -100,15 +105,18 @@ export default function EditPlaceScreen() {
         whatsapp: place.whatsapp || null,
         description_ar: place.description_ar || null,
         categoryIds,
-        services: existingServices.length > 0 ? existingServices : [{ id: '1', name_ar: '', description_ar: '' }],
-      })
+        services:
+          existingServices.length > 0
+            ? existingServices
+            : [{ id: '1', name_ar: '', description_ar: '' }],
+      });
     } catch (error) {
-      Alert.alert('خطأ', 'فشل تحميل بيانات المكان')
-      router.back()
+      Alert.alert('خطأ', 'فشل تحميل بيانات المكان');
+      router.back();
     } finally {
-      setInitialLoading(false)
+      setInitialLoading(false);
     }
-  }
+  };
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -116,12 +124,12 @@ export default function EditPlaceScreen() {
       .select('*')
       .is('parent_id', null)
       .eq('is_active', true)
-      .order('sort_order')
+      .order('sort_order');
 
     if (data && !error) {
-      setCategories(data)
+      setCategories(data);
     }
-  }
+  };
 
   const fetchChildCategories = async (parentId: number) => {
     const { data, error } = await supabase
@@ -129,109 +137,113 @@ export default function EditPlaceScreen() {
       .select('*')
       .eq('parent_id', parentId)
       .eq('is_active', true)
-      .order('sort_order')
+      .order('sort_order');
 
     if (data && !error) {
-      setSelectedParent({ ...selectedParent!, children: data })
+      setSelectedParent({ ...selectedParent!, children: data });
     }
-  }
+  };
 
   const handleParentSelect = (category: Category) => {
-    setSelectedParent(category)
-    fetchChildCategories(category.id)
-  }
+    setSelectedParent(category);
+    fetchChildCategories(category.id);
+  };
 
   const handleCategoryToggle = (categoryId: number) => {
-    const maxSelection = placeType === 'person' ? 2 : 1
+    const maxSelection = placeType === 'person' ? 2 : 1;
     if (selectedCategories.includes(categoryId)) {
-      setSelectedCategories(selectedCategories.filter(id => id !== categoryId))
+      setSelectedCategories(selectedCategories.filter((id) => id !== categoryId));
     } else if (selectedCategories.length < maxSelection) {
-      setSelectedCategories([...selectedCategories, categoryId])
+      setSelectedCategories([...selectedCategories, categoryId]);
     }
-  }
+  };
 
   const addService = () => {
-    setServices([...services, { id: Date.now().toString(), name_ar: '', description_ar: '' }])
-  }
+    setServices([...services, { id: Date.now().toString(), name_ar: '', description_ar: '' }]);
+  };
 
   const removeService = (id: string) => {
     if (services.length > 1) {
-      setServices(services.filter(s => s.id !== id))
+      setServices(services.filter((s) => s.id !== id));
     }
-  }
+  };
 
   const updateService = (id: string, field: keyof Service, value: string) => {
-    setServices(services.map(s => s.id === id ? { ...s, [field]: value } : s))
-  }
+    setServices(services.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  };
 
   const validateStep1 = () => {
     if (!placeType) {
-      Alert.alert('خطأ', 'الرجاء اختيار نوع المكان')
-      return false
+      Alert.alert('خطأ', 'الرجاء اختيار نوع المكان');
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const validateStep2 = () => {
-    const minSelection = placeType === 'person' ? 1 : 1
+    const minSelection = placeType === 'person' ? 1 : 1;
     if (selectedCategories.length < minSelection) {
-      Alert.alert('خطأ', placeType === 'person' ? 'الرجاء اختيار تصنيف واحد على الأقل' : 'الرجاء اختيار تصنيف')
-      return false
+      Alert.alert(
+        'خطأ',
+        placeType === 'person' ? 'الرجاء اختيار تصنيف واحد على الأقل' : 'الرجاء اختيار تصنيف'
+      );
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const validateStep3 = () => {
     if (!nameAr.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال اسم المكان')
-      return false
+      Alert.alert('خطأ', 'الرجاء إدخال اسم المكان');
+      return false;
     }
     if (!phone.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال رقم التليفون')
-      return false
+      Alert.alert('خطأ', 'الرجاء إدخال رقم التليفون');
+      return false;
     }
     if (!isValidEgyptianPhone(phone.trim())) {
-      Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
-      return false
+      Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح');
+      return false;
     }
     if (whatsapp.trim() && !isValidEgyptianPhone(whatsapp.trim())) {
-      Alert.alert('خطأ', 'رقم الواتساب غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
-      return false
+      Alert.alert('خطأ', 'رقم الواتساب غير صالح. يجب أن يكون رقم هاتف مصري صحيح');
+      return false;
     }
     if (placeType === 'shop' && !addressText.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال العنوان')
-      return false
+      Alert.alert('خطأ', 'الرجاء إدخال العنوان');
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const validateStep4 = () => {
-    const validServices = services.filter(s => s.name_ar.trim())
+    const validServices = services.filter((s) => s.name_ar.trim());
     if (validServices.length === 0) {
-      Alert.alert('خطأ', 'الرجاء إضافة خدمة واحدة على الأقل')
-      return false
+      Alert.alert('خطأ', 'الرجاء إضافة خدمة واحدة على الأقل');
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async () => {
-    if (!user || !id || !originalData) return
+    if (!user || !id || !originalData) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       // Detect which fields changed
-      const nameChanged = nameAr.trim() !== originalData.name_ar
-      const phoneChanged = phone.trim() !== originalData.phone
-      const whatsappChanged = (whatsapp.trim() || null) !== originalData.whatsapp
-      const descriptionChanged = (descriptionAr.trim() || null) !== originalData.description_ar
-      const categoriesChanged = !arraysEqual(selectedCategories, originalData.categoryIds)
-      const servicesChanged = JSON.stringify(services.filter(s => s.name_ar.trim())) !==
-        JSON.stringify(originalData.services || [])
+      const nameChanged = nameAr.trim() !== originalData.name_ar;
+      const phoneChanged = phone.trim() !== originalData.phone;
+      const whatsappChanged = (whatsapp.trim() || null) !== originalData.whatsapp;
+      const descriptionChanged = (descriptionAr.trim() || null) !== originalData.description_ar;
+      const categoriesChanged = !arraysEqual(selectedCategories, originalData.categoryIds);
+      const servicesChanged =
+        JSON.stringify(services.filter((s) => s.name_ar.trim())) !==
+        JSON.stringify(originalData.services || []);
 
       // Group A: Direct publish (no approval needed)
       // Group B: Requires admin approval
-      const groupAChanged = phoneChanged || whatsappChanged || descriptionChanged
-      const groupBChanged = nameChanged || categoriesChanged
+      const groupAChanged = phoneChanged || whatsappChanged || descriptionChanged;
+      const groupBChanged = nameChanged || categoriesChanged;
 
       if (groupBChanged) {
         // If any Group B field changed, ALL changes go through edit requests for consistency
@@ -243,7 +255,7 @@ export default function EditPlaceScreen() {
             old_value: originalData.name_ar,
             new_value: nameAr.trim(),
             status: 'pending',
-          })
+          });
         }
 
         if (categoriesChanged) {
@@ -254,7 +266,7 @@ export default function EditPlaceScreen() {
             old_value: JSON.stringify(originalData.categoryIds),
             new_value: JSON.stringify(selectedCategories),
             status: 'pending',
-          })
+          });
         }
 
         // Group A fields also go through edit requests when Group B changed
@@ -266,7 +278,7 @@ export default function EditPlaceScreen() {
             old_value: originalData.phone,
             new_value: phone.trim(),
             status: 'pending',
-          })
+          });
         }
 
         if (whatsappChanged) {
@@ -277,7 +289,7 @@ export default function EditPlaceScreen() {
             old_value: originalData.whatsapp || '',
             new_value: whatsapp.trim() || '',
             status: 'pending',
-          })
+          });
         }
 
         if (descriptionChanged) {
@@ -288,7 +300,7 @@ export default function EditPlaceScreen() {
             old_value: originalData.description_ar || '',
             new_value: descriptionAr.trim() || '',
             status: 'pending',
-          })
+          });
         }
 
         // Services also go through edit requests when Group B changed
@@ -298,16 +310,14 @@ export default function EditPlaceScreen() {
             provider_id: user.id,
             field_name: 'services',
             old_value: JSON.stringify(originalData.services || []),
-            new_value: JSON.stringify(services.filter(s => s.name_ar.trim())),
+            new_value: JSON.stringify(services.filter((s) => s.name_ar.trim())),
             status: 'pending',
-          })
+          });
         }
 
-        Alert.alert(
-          'تم الإرسال',
-          'تم إرسال طلب التعديل للمراجعة ⏳',
-          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
-        )
+        Alert.alert('تم الإرسال', 'تم إرسال طلب التعديل للمراجعة ⏳', [
+          { text: 'حسناً', onPress: () => router.replace('/provider/dashboard') },
+        ]);
       } else if (groupAChanged || servicesChanged) {
         // Only Group A fields or services changed - update directly
         if (groupAChanged) {
@@ -318,55 +328,51 @@ export default function EditPlaceScreen() {
               whatsapp: whatsapp.trim() || null,
               description_ar: descriptionAr.trim() || null,
             })
-            .eq('id', id)
+            .eq('id', id);
         }
 
         // Update services directly
-        await supabase.from('place_services').delete().eq('place_id', id)
-        const validServices = services.filter(s => s.name_ar.trim())
+        await supabase.from('place_services').delete().eq('place_id', id);
+        const validServices = services.filter((s) => s.name_ar.trim());
         for (const service of validServices) {
           await supabase.from('place_services').insert({
             place_id: id,
             name_ar: service.name_ar.trim(),
             description_ar: service.description_ar.trim() || null,
-          })
+          });
         }
 
-        Alert.alert(
-          'تم التحديث',
-          'تم التحديث بنجاح ✅',
-          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
-        )
+        Alert.alert('تم التحديث', 'تم التحديث بنجاح ✅', [
+          { text: 'حسناً', onPress: () => router.replace('/provider/dashboard') },
+        ]);
       } else {
         // No changes
-        Alert.alert(
-          'لا توجد تغييرات',
-          'لم تقم بإجراء أي تغييرات',
-          [{ text: 'حسناً', onPress: () => router.back() }]
-        )
+        Alert.alert('لا توجد تغييرات', 'لم تقم بإجراء أي تغييرات', [
+          { text: 'حسناً', onPress: () => router.back() },
+        ]);
       }
     } catch (error) {
-      console.error('Edit place error:', error)
-      Alert.alert('خطأ', 'فشل تحديث البيانات')
+      console.error('Edit place error:', error);
+      Alert.alert('خطأ', 'فشل تحديث البيانات');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Helper function to compare arrays
   const arraysEqual = (a: number[], b: number[]) => {
-    if (a.length !== b.length) return false
-    const sortedA = [...a].sort()
-    const sortedB = [...b].sort()
-    return sortedA.every((val, index) => val === sortedB[index])
-  }
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((val, index) => val === sortedB[index]);
+  };
 
   const handleNext = () => {
-    if (step === 1 && validateStep1()) setStep(2)
-    else if (step === 2 && validateStep2()) setStep(3)
-    else if (step === 3 && validateStep3()) setStep(4)
-    else if (step === 4 && validateStep4()) handleSubmit()
-  }
+    if (step === 1 && validateStep1()) setStep(2);
+    else if (step === 2 && validateStep2()) setStep(3);
+    else if (step === 3 && validateStep3()) setStep(4);
+    else if (step === 4 && validateStep4()) handleSubmit();
+  };
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
@@ -374,34 +380,24 @@ export default function EditPlaceScreen() {
       <Text style={styles.stepSubtitle}>اختر نوع المكان</Text>
 
       <TouchableOpacity
-        style={[
-          styles.typeCard,
-          placeType === 'shop' && styles.typeCardSelected,
-        ]}
+        style={[styles.typeCard, placeType === 'shop' && styles.typeCardSelected]}
         onPress={() => setPlaceType('shop')}
       >
         <Text style={styles.typeEmoji}>🏪</Text>
         <Text style={styles.typeName}>محل أو مكان</Text>
-        {placeType === 'shop' && (
-          <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
-        )}
+        {placeType === 'shop' && <Ionicons name="checkmark-circle" size={24} color="#1B4332" />}
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.typeCard,
-          placeType === 'person' && styles.typeCardSelected,
-        ]}
+        style={[styles.typeCard, placeType === 'person' && styles.typeCardSelected]}
         onPress={() => setPlaceType('person')}
       >
         <Text style={styles.typeEmoji}>👤</Text>
         <Text style={styles.typeName}>شخص / مهنة</Text>
-        {placeType === 'person' && (
-          <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
-        )}
+        {placeType === 'person' && <Ionicons name="checkmark-circle" size={24} color="#1B4332" />}
       </TouchableOpacity>
     </View>
-  )
+  );
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
@@ -425,10 +421,7 @@ export default function EditPlaceScreen() {
         </View>
       ) : (
         <View>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setSelectedParent(null)}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedParent(null)}>
             <Ionicons name="chevron-back" size={20} color="#1B4332" />
             <Text style={styles.backButtonText}>عودة</Text>
           </TouchableOpacity>
@@ -456,7 +449,7 @@ export default function EditPlaceScreen() {
         </View>
       )}
     </View>
-  )
+  );
 
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
@@ -523,7 +516,7 @@ export default function EditPlaceScreen() {
         />
       </View>
     </View>
-  )
+  );
 
   const renderStep4 = () => (
     <View style={styles.stepContainer}>
@@ -566,14 +559,14 @@ export default function EditPlaceScreen() {
         <Text style={styles.addServiceButtonText}>إضافة خدمة</Text>
       </TouchableOpacity>
     </View>
-  )
+  );
 
   if (initialLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#1B4332" />
       </View>
-    )
+    );
   }
 
   return (
@@ -593,22 +586,14 @@ export default function EditPlaceScreen() {
         <View style={styles.progressContainer}>
           {[1, 2, 3, 4].map((s) => (
             <View key={s} style={styles.progressStep}>
-              <View
-                style={[
-                  styles.progressCircle,
-                  step >= s && styles.progressCircleActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.progressNumber,
-                    step >= s && styles.progressNumberActive,
-                  ]}
-                >
+              <View style={[styles.progressCircle, step >= s && styles.progressCircleActive]}>
+                <Text style={[styles.progressNumber, step >= s && styles.progressNumberActive]}>
                   {s}
                 </Text>
               </View>
-              {s < 4 && <View style={[styles.progressLine, step > s && styles.progressLineActive]} />}
+              {s < 4 && (
+                <View style={[styles.progressLine, step > s && styles.progressLineActive]} />
+              )}
             </View>
           ))}
         </View>
@@ -620,22 +605,16 @@ export default function EditPlaceScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.nextButton}
-          onPress={handleNext}
-          disabled={loading}
-        >
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.nextButtonText}>
-              {step === 4 ? 'حفظ التعديلات' : 'التالي'}
-            </Text>
+            <Text style={styles.nextButtonText}>{step === 4 ? 'حفظ التعديلات' : 'التالي'}</Text>
           )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -862,4 +841,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
   },
-})
+});

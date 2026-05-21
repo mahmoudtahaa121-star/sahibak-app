@@ -14,41 +14,45 @@
  * @returns true if valid, false otherwise
  */
 export function isValidEgyptianPhone(phone: string): boolean {
-  if (!phone || phone.trim() === '') return false
+  if (!phone || phone.trim() === '') return false;
 
-  const cleaned = phone.replace(/\s/g, '').replace(/-/g, '').replace(/\+/g, '')
+  const cleaned = phone.replace(/\s/g, '').replace(/-/g, '').replace(/\+/g, '');
 
   // Local format: 01XXXXXXXXX (mobile) or 02XXXXXXXX (landline)
   if (cleaned.startsWith('0')) {
     // Mobile: 010, 011, 012, 015 followed by 8 digits (11 digits total)
     if (/^(01[0125])\d{8}$/.test(cleaned)) {
-      return true
+      return true;
     }
     // Cairo landline: 02XXXXXXXX (10 digits)
     if (cleaned.startsWith('02') && cleaned.length === 10) {
-      return /^\d{10}$/.test(cleaned)
+      return /^\d{10}$/.test(cleaned);
     }
-    return false
+    return false;
   }
 
   // International format: +20 followed by phone number
   if (cleaned.startsWith('20')) {
-    const withoutCountry = cleaned.substring(2)
+    const withoutCountry = cleaned.substring(2);
 
     // Mobile: 1XXXXXXXXX (10-11 digits after country code)
     if (/^(1[0125])\d{8}$/.test(withoutCountry)) {
-      return true
+      return true;
     }
 
     // Cairo landline: 2XXXXXXXX (8-9 digits after country code)
-    if (withoutCountry.startsWith('2') && withoutCountry.length >= 8 && withoutCountry.length <= 9) {
-      return true
+    if (
+      withoutCountry.startsWith('2') &&
+      withoutCountry.length >= 8 &&
+      withoutCountry.length <= 9
+    ) {
+      return true;
     }
 
-    return false
+    return false;
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -57,30 +61,30 @@ export function isValidEgyptianPhone(phone: string): boolean {
  * @returns Formatted phone number or original if invalid
  */
 export function formatEgyptianPhone(phone: string): string {
-  if (!phone || phone.trim() === '') return phone
+  if (!phone || phone.trim() === '') return phone;
 
-  const cleaned = phone.replace(/\s/g, '').replace(/-/g, '')
+  const cleaned = phone.replace(/\s/g, '').replace(/-/g, '');
 
   // If already international format
   if (cleaned.startsWith('+20')) {
-    return cleaned
+    return cleaned;
   }
 
   // If local format starting with 0
   if (cleaned.startsWith('0')) {
-    return '+20' + cleaned.substring(1)
+    return '+20' + cleaned.substring(1);
   }
 
-  return phone
+  return phone;
 }
 
 // Keep old function name for backward compatibility (deprecated)
 export function isValidIraqiPhone(phone: string): boolean {
-  return isValidEgyptianPhone(phone)
+  return isValidEgyptianPhone(phone);
 }
 
 export function formatIraqiPhone(phone: string): string {
-  return formatEgyptianPhone(phone)
+  return formatEgyptianPhone(phone);
 }
 
 /**
@@ -89,14 +93,14 @@ export function formatIraqiPhone(phone: string): string {
  * @returns true if meets requirements, false otherwise
  */
 export function isValidPassword(password: string): boolean {
-  if (!password || password.length < 8) return false
-  
+  if (!password || password.length < 8) return false;
+
   // At least one letter
-  const hasLetter = /[a-zA-Z]/.test(password)
+  const hasLetter = /[a-zA-Z]/.test(password);
   // At least one digit
-  const hasDigit = /\d/.test(password)
-  
-  return hasLetter && hasDigit
+  const hasDigit = /\d/.test(password);
+
+  return hasLetter && hasDigit;
 }
 
 /**
@@ -105,10 +109,10 @@ export function isValidPassword(password: string): boolean {
  * @returns true if valid, false otherwise
  */
 export function isValidEmail(email: string): boolean {
-  if (!email || email.trim() === '') return false
-  
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email.trim())
+  if (!email || email.trim() === '') return false;
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
 }
 
 /**
@@ -117,5 +121,5 @@ export function isValidEmail(email: string): boolean {
  * @returns true if not empty, false otherwise
  */
 export function isNotEmpty(text: string): boolean {
-  return text !== null && text !== undefined && text.trim().length > 0
+  return text !== null && text !== undefined && text.trim().length > 0;
 }

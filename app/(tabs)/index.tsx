@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { debounce } from '../../utils/debounce'
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { debounce } from '../../utils/debounce';
 import {
   View,
   Text,
@@ -10,114 +10,121 @@ import {
   FlatList,
   Modal,
   Alert,
-  ActivityIndicator,
   RefreshControl,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import NetInfo from '@react-native-community/netinfo'
-import { useArea } from '../../hooks/useArea'
-import { useNews } from '../../hooks/useNews'
-import { useParentCategories, useChildCategories } from '../../hooks/useCategories'
-import { usePlaces } from '../../hooks/usePlaces'
-import { useOffers } from '../../hooks/useOffers'
-import PlaceCard from '../../components/place/PlaceCard'
-import NewsCard from '../../components/news/NewsCard'
-import Skeleton from '../../components/ui/Skeleton'
-import { Category, Place, News } from '../../types'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import NetInfo from '@react-native-community/netinfo';
+import { useArea } from '../../hooks/useArea';
+import { useNews } from '../../hooks/useNews';
+import { useParentCategories, useChildCategories } from '../../hooks/useCategories';
+import { usePlaces } from '../../hooks/usePlaces';
+import { useOffers } from '../../hooks/useOffers';
+import PlaceCard from '../../components/place/PlaceCard';
+import NewsCard from '../../components/news/NewsCard';
+import Skeleton from '../../components/ui/Skeleton';
+import { Category, Place, News } from '../../types';
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets()
-  const { selectedArea, availableAreas, setSelectedArea } = useArea()
-  const { data: news, isLoading: newsLoading, error: newsError, refetch: refetchNews } = useNews()
-  const { data: categories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useParentCategories()
-  const { data: places, isLoading: placesLoading, error: placesError, refetch: refetchPlaces } = usePlaces(selectedArea)
-  const { data: offers, refetch: refetchOffers } = useOffers(selectedArea)
-  const [isConnected, setIsConnected] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchInput, setSearchInput] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
-  const [showAreaModal, setShowAreaModal] = useState(false)
-  const [showNewsModal, setShowNewsModal] = useState(false)
-  const [selectedNews, setSelectedNews] = useState<News | null>(null)
-  const [refreshing, setRefreshing] = useState(false)
+  const insets = useSafeAreaInsets();
+  const { selectedArea, availableAreas, setSelectedArea } = useArea();
+  const { data: news, isLoading: _newsLoading, error: newsError, refetch: refetchNews } = useNews();
+  const {
+    data: categories,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useParentCategories();
+  const {
+    data: places,
+    isLoading: placesLoading,
+    error: placesError,
+    refetch: refetchPlaces,
+  } = usePlaces(selectedArea);
+  const { data: offers, refetch: refetchOffers } = useOffers(selectedArea);
+  const [isConnected, setIsConnected] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [showAreaModal, setShowAreaModal] = useState(false);
+  const [showNewsModal, setShowNewsModal] = useState(false);
+  const [selectedNews, setSelectedNews] = useState<News | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const activeOffersCount = useMemo(() => offers?.length || 0, [offers])
+  const activeOffersCount = useMemo(() => offers?.length || 0, [offers]);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsConnected(state.isConnected ?? true)
-    })
-    return () => unsubscribe()
-  }, [])
+      setIsConnected(state.isConnected ?? true);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Debounced search handler
-  const debouncedSearch = useCallback(
-    debounce((value: string) => {
-      setSearchQuery(value)
-    }, 300),
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchQuery(value);
+      }, 300),
     []
-  )
+  );
 
   // Update debounced search when input changes
   useEffect(() => {
-    debouncedSearch(searchInput)
-  }, [searchInput, debouncedSearch])
+    debouncedSearch(searchInput);
+  }, [searchInput, debouncedSearch]);
 
   const filteredPlaces = useMemo(() => {
-    return places?.filter((place: Place) => {
-      if (searchQuery.length <= 1) return true
-      const query = searchQuery.toLowerCase()
-      return (
-        place.name_ar.includes(query) ||
-        place.services?.some((s) =>
-          s.name_ar.includes(query) || s.description_ar?.includes(query)
-        )
-      )
-    }) || []
-  }, [places, searchQuery])
+    return (
+      places?.filter((place: Place) => {
+        if (searchQuery.length <= 1) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+          place.name_ar.includes(query) ||
+          place.services?.some(
+            (s) => s.name_ar.includes(query) || s.description_ar?.includes(query)
+          )
+        );
+      }) || []
+    );
+  }, [places, searchQuery]);
 
   const handleCategoryPress = useCallback((category: Category) => {
-    setSelectedCategory(category)
-  }, [])
+    setSelectedCategory(category);
+  }, []);
 
   const handleChildCategoryPress = useCallback((childId: number) => {
-    setSelectedCategory(null)
-    router.push(`/category/${childId}`)
-  }, [])
+    setSelectedCategory(null);
+    router.push(`/category/${childId}`);
+  }, []);
 
   const handlePlacePress = useCallback((placeId: string) => {
-    router.push(`/place/${placeId}`)
-  }, [])
+    router.push(`/place/${placeId}`);
+  }, []);
 
   const handleNewsPress = useCallback((newsItem: News) => {
-    setSelectedNews(newsItem)
-    setShowNewsModal(true)
-  }, [])
+    setSelectedNews(newsItem);
+    setShowNewsModal(true);
+  }, []);
 
   const handleOffersPress = useCallback(() => {
-    router.push('/offers')
-  }, [])
+    router.push('/offers');
+  }, []);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true)
+    setRefreshing(true);
     try {
-      await Promise.all([
-        refetchNews(),
-        refetchCategories(),
-        refetchPlaces(),
-        refetchOffers(),
-      ])
+      await Promise.all([refetchNews(), refetchCategories(), refetchPlaces(), refetchOffers()]);
     } catch (error) {
-      console.error('Refresh error:', error)
-      Alert.alert('خطأ', 'حدث خطأ أثناء التحديث. يرجى المحاولة مرة أخرى')
+      console.error('Refresh error:', error);
+      Alert.alert('خطأ', 'حدث خطأ أثناء التحديث. يرجى المحاولة مرة أخرى');
     } finally {
-      setRefreshing(false)
+      setRefreshing(false);
     }
-  }, [refetchNews, refetchCategories, refetchPlaces, refetchOffers])
+  }, [refetchNews, refetchCategories, refetchPlaces, refetchOffers]);
 
-  const isSearching = searchQuery.length > 1
+  const isSearching = searchQuery.length > 1;
 
   return (
     <View style={styles.container}>
@@ -140,10 +147,7 @@ export default function HomeScreen() {
         {availableAreas.length === 1 ? (
           <Text style={styles.areaText}>{selectedArea}</Text>
         ) : (
-          <TouchableOpacity
-            style={styles.areaButton}
-            onPress={() => setShowAreaModal(true)}
-          >
+          <TouchableOpacity style={styles.areaButton} onPress={() => setShowAreaModal(true)}>
             <Text style={styles.areaText}>{selectedArea} ▾</Text>
           </TouchableOpacity>
         )}
@@ -185,11 +189,7 @@ export default function HomeScreen() {
                 removeClippedSubviews={true}
                 initialNumToRender={10}
                 renderItem={({ item }) => (
-                  <PlaceCard
-                    key={item.id}
-                    place={item}
-                    onPress={() => handlePlacePress(item.id)}
-                  />
+                  <PlaceCard key={item.id} place={item} onPress={() => handlePlacePress(item.id)} />
                 )}
               />
             )}
@@ -205,11 +205,7 @@ export default function HomeScreen() {
                   contentContainerStyle={styles.newsScroll}
                 >
                   {news.map((item) => (
-                    <NewsCard
-                      key={item.id}
-                      news={item}
-                      onPress={() => handleNewsPress(item)}
-                    />
+                    <NewsCard key={item.id} news={item} onPress={() => handleNewsPress(item)} />
                   ))}
                 </ScrollView>
               </View>
@@ -250,10 +246,7 @@ export default function HomeScreen() {
             </View>
 
             {activeOffersCount > 0 && (
-              <TouchableOpacity
-                style={styles.offersBanner}
-                onPress={handleOffersPress}
-              >
+              <TouchableOpacity style={styles.offersBanner} onPress={handleOffersPress}>
                 <Text style={styles.offersText}>🔥 عروض دلوقتي</Text>
                 <View style={styles.offersBadge}>
                   <Text style={styles.offersBadgeText}>{activeOffersCount} عرض</Text>
@@ -269,7 +262,13 @@ export default function HomeScreen() {
               {placesLoading ? (
                 <View style={styles.placesSkeleton}>
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} width={350} height={90} borderRadius={14} style={styles.skeletonCard} />
+                    <Skeleton
+                      key={i}
+                      width={350}
+                      height={90}
+                      borderRadius={14}
+                      style={styles.skeletonCard}
+                    />
                   ))}
                 </View>
               ) : placesError ? (
@@ -283,9 +282,7 @@ export default function HomeScreen() {
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyEmoji}>🏘</Text>
                   <Text style={styles.emptyTitle}>لا توجد خدمات بعد</Text>
-                  <Text style={styles.emptySubtitle}>
-                    كن أول من يضيف خدمة في {selectedArea}
-                  </Text>
+                  <Text style={styles.emptySubtitle}>كن أول من يضيف خدمة في {selectedArea}</Text>
                 </View>
               ) : (
                 <View style={styles.placesList}>
@@ -321,14 +318,12 @@ export default function HomeScreen() {
                 key={area}
                 style={styles.modalItem}
                 onPress={() => {
-                  setSelectedArea(area)
-                  setShowAreaModal(false)
+                  setSelectedArea(area);
+                  setShowAreaModal(false);
                 }}
               >
                 <Text style={styles.modalItemText}>{area}</Text>
-                {selectedArea === area && (
-                  <Ionicons name="checkmark" size={20} color="#1B4332" />
-                )}
+                {selectedArea === area && <Ionicons name="checkmark" size={20} color="#1B4332" />}
               </TouchableOpacity>
             ))}
           </View>
@@ -351,10 +346,7 @@ export default function HomeScreen() {
             {selectedNews?.body_ar && (
               <Text style={styles.newsModalBody}>{selectedNews.body_ar}</Text>
             )}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowNewsModal(false)}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowNewsModal(false)}>
               <Text style={styles.closeButtonText}>إغلاق</Text>
             </TouchableOpacity>
           </View>
@@ -376,18 +368,27 @@ export default function HomeScreen() {
             <Text style={styles.bottomSheetTitle}>{selectedCategory?.name_ar}</Text>
             <View style={styles.childCategoriesGrid}>
               {selectedCategory && (
-                <ChildCategories parentId={selectedCategory.id} onSelect={handleChildCategoryPress} />
+                <ChildCategories
+                  parentId={selectedCategory.id}
+                  onSelect={handleChildCategoryPress}
+                />
               )}
             </View>
           </View>
         </TouchableOpacity>
       </Modal>
     </View>
-  )
+  );
 }
 
-function ChildCategories({ parentId, onSelect }: { parentId: number; onSelect: (id: number) => void }) {
-  const { data: children, isLoading } = useChildCategories(parentId)
+function ChildCategories({
+  parentId,
+  onSelect,
+}: {
+  parentId: number;
+  onSelect: (id: number) => void;
+}) {
+  const { data: children, isLoading } = useChildCategories(parentId);
 
   if (isLoading) {
     return (
@@ -396,11 +397,11 @@ function ChildCategories({ parentId, onSelect }: { parentId: number; onSelect: (
           <Skeleton key={i} width={80} height={80} borderRadius={12} />
         ))}
       </View>
-    )
+    );
   }
 
   if (!children || children.length === 0) {
-    return <Text style={styles.noChildren}>لا توجد فئات فرعية</Text>
+    return <Text style={styles.noChildren}>لا توجد فئات فرعية</Text>;
   }
 
   return (
@@ -416,7 +417,7 @@ function ChildCategories({ parentId, onSelect }: { parentId: number; onSelect: (
         </TouchableOpacity>
       ))}
     </>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -791,4 +792,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 20,
   },
-})
+});

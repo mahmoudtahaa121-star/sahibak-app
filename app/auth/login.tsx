@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,39 +10,39 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useLocalSearchParams, router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import Constants from 'expo-constants'
-import { supabase } from '../../lib/supabase'
-import * as WebBrowser from 'expo-web-browser'
-import * as AuthSession from 'expo-auth-session'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
+import { supabase } from '../../lib/supabase';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 
 export default function LoginScreen() {
-  const insets = useSafeAreaInsets()
-  const { redirect } = useLocalSearchParams<{ redirect?: string }>()
-  const scheme = Constants.expoConfig?.scheme ?? 'sahibak'
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const insets = useSafeAreaInsets();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const scheme = Constants.expoConfig?.scheme ?? 'sahibak';
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    WebBrowser.maybeCompleteAuthSession()
-  }, [])
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
 
   const handleBack = () => {
     // Redirect to the intended page or home if not specified
-    const targetPath = redirect || '/'
-    router.replace(targetPath)
-  }
+    const targetPath = redirect || '/';
+    router.replace(targetPath);
+  };
 
   const ensureProfileExists = async (userId: string, email: string, fullName?: string) => {
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id')
       .eq('id', userId)
-      .single()
+      .single();
 
     if (!existingProfile) {
       const { error: profileError } = await supabase.from('profiles').insert({
@@ -51,52 +51,56 @@ export default function LoginScreen() {
         phone: '',
         role: 'user',
         is_banned: false,
-      })
+      });
 
       if (profileError) {
         // Profile creation failed - will be handled on next login
       }
     }
-  }
+  };
 
   const handleEmailLogin = async () => {
     if (!email.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني')
-      return
+      Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
+      return;
     }
     if (!password) {
-      Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور')
-      return
+      Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور');
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
-      })
+      });
 
       if (error) {
-        Alert.alert('خطأ في تسجيل الدخول', 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
+        Alert.alert('خطأ في تسجيل الدخول', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
       } else if (data.user) {
-        await ensureProfileExists(data.user.id, data.user.email || '', data.user.user_metadata?.full_name)
-        router.replace(redirect || '/')
+        await ensureProfileExists(
+          data.user.id,
+          data.user.email || '',
+          data.user.user_metadata?.full_name
+        );
+        router.replace(redirect || '/');
       }
     } catch (error) {
-      Alert.alert('خطأ', 'حدث خطأ غير متوقع')
+      Alert.alert('خطأ', 'حدث خطأ غير متوقع');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleGoogleLogin = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const redirectUrl = AuthSession.makeRedirectUri({
         scheme: typeof scheme === 'string' ? scheme : 'sahibak',
-      })
+      });
 
-      console.log('Google OAuth redirect URL:', redirectUrl)
+      console.log('Google OAuth redirect URL:', redirectUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -104,37 +108,37 @@ export default function LoginScreen() {
           redirectTo: redirectUrl,
           skipBrowserRedirect: false,
         },
-      })
+      });
 
       if (error) {
-        console.error('Google OAuth error:', error)
-        Alert.alert('خطأ', `فشل تسجيل الدخول عبر جوجل: ${error.message}`)
-        setLoading(false)
-        return
+        console.error('Google OAuth error:', error);
+        Alert.alert('خطأ', `فشل تسجيل الدخول عبر جوجل: ${error.message}`);
+        setLoading(false);
+        return;
       }
 
       if (data.url) {
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl)
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
 
         if (result.type === 'success') {
-          const { data: sessionData } = await supabase.auth.getSession()
+          const { data: sessionData } = await supabase.auth.getSession();
           if (sessionData.session?.user) {
             await ensureProfileExists(
               sessionData.session.user.id,
               sessionData.session.user.email || '',
               sessionData.session.user.user_metadata?.full_name
-            )
-            router.replace(redirect || '/')
+            );
+            router.replace(redirect || '/');
           }
         }
       }
     } catch (error) {
-      console.error('Google login error:', error)
-      Alert.alert('خطأ', 'حدث خطأ غير متوقع')
+      console.error('Google login error:', error);
+      Alert.alert('خطأ', 'حدث خطأ غير متوقع');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -167,7 +171,12 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#ADB5BD" style={styles.inputIcon} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color="#ADB5BD"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="كلمة المرور"
@@ -207,16 +216,13 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.registerLink}
-          onPress={() => router.push('/auth/register')}
-        >
+        <TouchableOpacity style={styles.registerLink} onPress={() => router.push('/auth/register')}>
           <Text style={styles.registerText}>ليس لديك حساب؟</Text>
           <Text style={styles.registerLinkText}>إنشاء حساب جديد</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -341,6 +347,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1B4332',
   },
-})
-
-
+});

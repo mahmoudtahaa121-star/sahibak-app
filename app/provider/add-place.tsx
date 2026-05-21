@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,59 +10,57 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useAuth } from '../../hooks/useAuth'
-import { useParentCategories } from '../../hooks/useCategories'
-import { useAddPlace } from '../../hooks/useAddPlace'
-import { useProviderPlaces } from '../../hooks/useProviderPlaces'
-import { supabase } from '../../lib/supabase'
-import { Category } from '../../types'
-import { isValidEgyptianPhone } from '../../utils/validation'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../hooks/useAuth';
+import { useParentCategories } from '../../hooks/useCategories';
+import { useAddPlace } from '../../hooks/useAddPlace';
+import { useProviderPlaces } from '../../hooks/useProviderPlaces';
+import { supabase } from '../../lib/supabase';
+import { Category } from '../../types';
+import { isValidEgyptianPhone } from '../../utils/validation';
 
-type Step = 1 | 2 | 3 | 4
-type PlaceType = 'shop' | 'person'
+type Step = 1 | 2 | 3 | 4;
+type PlaceType = 'shop' | 'person';
 
 interface Service {
-  id: string
-  name_ar: string
-  description_ar: string
+  id: string;
+  name_ar: string;
+  description_ar: string;
 }
 
 export default function AddPlaceScreen() {
-  const insets = useSafeAreaInsets()
-  const { user, profile } = useAuth()
-  const addPlaceMutation = useAddPlace()
-  const { data: categories } = useParentCategories()
-  const { data: existingPlaces } = useProviderPlaces(user?.id)
-  const [step, setStep] = useState<Step>(1)
-  const [selectedParent, setSelectedParent] = useState<Category | null>(null)
+  const insets = useSafeAreaInsets();
+  const { user, profile } = useAuth();
+  const addPlaceMutation = useAddPlace();
+  const { data: categories } = useParentCategories();
+  const { data: existingPlaces } = useProviderPlaces(user?.id);
+  const [step, setStep] = useState<Step>(1);
+  const [selectedParent, setSelectedParent] = useState<Category | null>(null);
 
   // Calculate place counts for limit check
-  const shopCount = existingPlaces?.filter(
-    p => p.place_type === 'shop' && p.deleted_at === null
-  ).length ?? 0
+  const shopCount =
+    existingPlaces?.filter((p) => p.place_type === 'shop' && p.deleted_at === null).length ?? 0;
 
-  const personCount = existingPlaces?.filter(
-    p => p.place_type === 'person' && p.deleted_at === null
-  ).length ?? 0
+  const personCount =
+    existingPlaces?.filter((p) => p.place_type === 'person' && p.deleted_at === null).length ?? 0;
 
-  const [placeType, setPlaceType] = useState<PlaceType | null>(null)
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([])
-  const [nameAr, setNameAr] = useState('')
-  const [phone, setPhone] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
-  const [descriptionAr, setDescriptionAr] = useState('')
-  const [addressText, setAddressText] = useState('')
+  const [placeType, setPlaceType] = useState<PlaceType | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [nameAr, setNameAr] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [descriptionAr, setDescriptionAr] = useState('');
+  const [addressText, setAddressText] = useState('');
   const [services, setServices] = useState<Service[]>([
-    { id: '1', name_ar: '', description_ar: '' }
-  ])
+    { id: '1', name_ar: '', description_ar: '' },
+  ]);
 
   if (profile && profile.role !== 'provider' && profile.role !== 'admin') {
-    router.replace('/')
-    return null
+    router.replace('/');
+    return null;
   }
 
   const fetchChildCategories = async (parentId: number) => {
@@ -71,93 +69,96 @@ export default function AddPlaceScreen() {
       .select('*')
       .eq('parent_id', parentId)
       .eq('is_active', true)
-      .order('sort_order')
+      .order('sort_order');
 
     if (data && !error) {
-      setSelectedParent({ ...selectedParent!, children: data })
+      setSelectedParent({ ...selectedParent!, children: data });
     }
-  }
+  };
 
   const handleParentSelect = (category: Category) => {
-    setSelectedParent(category)
-    fetchChildCategories(category.id)
-  }
+    setSelectedParent(category);
+    fetchChildCategories(category.id);
+  };
 
   const handleCategoryToggle = (categoryId: number) => {
-    const maxSelection = placeType === 'person' ? 2 : 1
+    const maxSelection = placeType === 'person' ? 2 : 1;
     if (selectedCategories.includes(categoryId)) {
-      setSelectedCategories(selectedCategories.filter(id => id !== categoryId))
+      setSelectedCategories(selectedCategories.filter((id) => id !== categoryId));
     } else if (selectedCategories.length < maxSelection) {
-      setSelectedCategories([...selectedCategories, categoryId])
+      setSelectedCategories([...selectedCategories, categoryId]);
     }
-  }
+  };
 
   const addService = () => {
-    setServices([...services, { id: Date.now().toString(), name_ar: '', description_ar: '' }])
-  }
+    setServices([...services, { id: Date.now().toString(), name_ar: '', description_ar: '' }]);
+  };
 
   const removeService = (id: string) => {
     if (services.length > 1) {
-      setServices(services.filter(s => s.id !== id))
+      setServices(services.filter((s) => s.id !== id));
     }
-  }
+  };
 
   const updateService = (id: string, field: keyof Service, value: string) => {
-    setServices(services.map(s => s.id === id ? { ...s, [field]: value } : s))
-  }
+    setServices(services.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  };
 
   const validateStep1 = () => {
     if (!placeType) {
-      Alert.alert('خطأ', 'الرجاء اختيار نوع المكان')
-      return false
+      Alert.alert('خطأ', 'الرجاء اختيار نوع المكان');
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const validateStep2 = () => {
-    const minSelection = placeType === 'person' ? 1 : 1
+    const minSelection = placeType === 'person' ? 1 : 1;
     if (selectedCategories.length < minSelection) {
-      Alert.alert('خطأ', placeType === 'person' ? 'الرجاء اختيار تصنيف واحد على الأقل' : 'الرجاء اختيار تصنيف')
-      return false
+      Alert.alert(
+        'خطأ',
+        placeType === 'person' ? 'الرجاء اختيار تصنيف واحد على الأقل' : 'الرجاء اختيار تصنيف'
+      );
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const validateStep3 = () => {
     if (!nameAr.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال اسم المكان')
-      return false
+      Alert.alert('خطأ', 'الرجاء إدخال اسم المكان');
+      return false;
     }
     if (!phone.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال رقم التليفون')
-      return false
+      Alert.alert('خطأ', 'الرجاء إدخال رقم التليفون');
+      return false;
     }
     if (!isValidEgyptianPhone(phone.trim())) {
-      Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
-      return false
+      Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح');
+      return false;
     }
     if (whatsapp.trim() && !isValidEgyptianPhone(whatsapp.trim())) {
-      Alert.alert('خطأ', 'رقم الواتساب غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
-      return false
+      Alert.alert('خطأ', 'رقم الواتساب غير صالح. يجب أن يكون رقم هاتف مصري صحيح');
+      return false;
     }
     if (placeType === 'shop' && !addressText.trim()) {
-      Alert.alert('خطأ', 'الرجاء إدخال العنوان')
-      return false
+      Alert.alert('خطأ', 'الرجاء إدخال العنوان');
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const validateStep4 = () => {
-    const validServices = services.filter(s => s.name_ar.trim())
+    const validServices = services.filter((s) => s.name_ar.trim());
     if (validServices.length === 0) {
-      Alert.alert('خطأ', 'الرجاء إضافة خدمة واحدة على الأقل')
-      return false
+      Alert.alert('خطأ', 'الرجاء إضافة خدمة واحدة على الأقل');
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async () => {
-    if (!user || !placeType) return
+    if (!user || !placeType) return;
 
     try {
       await addPlaceMutation.mutateAsync({
@@ -172,28 +173,26 @@ export default function AddPlaceScreen() {
           address_text: placeType === 'shop' ? addressText.trim() : null,
         },
         categoryIds: selectedCategories,
-        services: services.map(s => ({
+        services: services.map((s) => ({
           name_ar: s.name_ar,
           description_ar: s.description_ar,
         })),
-      })
+      });
 
-      Alert.alert(
-        'تم الإرسال',
-        'تم إرسال طلبك للمراجعة! سيتم الرد خلال 24 ساعة',
-        [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
-      )
+      Alert.alert('تم الإرسال', 'تم إرسال طلبك للمراجعة! سيتم الرد خلال 24 ساعة', [
+        { text: 'حسناً', onPress: () => router.replace('/provider/dashboard') },
+      ]);
     } catch (error) {
-      Alert.alert('خطأ', 'فشل إرسال الطلب')
+      Alert.alert('خطأ', 'فشل إرسال الطلب');
     }
-  }
+  };
 
   const handleNext = () => {
-    if (step === 1 && validateStep1()) setStep(2)
-    else if (step === 2 && validateStep2()) setStep(3)
-    else if (step === 3 && validateStep3()) setStep(4)
-    else if (step === 4 && validateStep4()) handleSubmit()
-  }
+    if (step === 1 && validateStep1()) setStep(2);
+    else if (step === 2 && validateStep2()) setStep(3);
+    else if (step === 3 && validateStep3()) setStep(4);
+    else if (step === 4 && validateStep4()) handleSubmit();
+  };
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
@@ -216,12 +215,8 @@ export default function AddPlaceScreen() {
             <Text style={styles.limitMessage}>لديك الحد الأقصى من المحلات (3)</Text>
           )}
         </View>
-        {placeType === 'shop' && (
-          <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
-        )}
-        {shopCount >= 3 && (
-          <Ionicons name="lock-closed" size={24} color="#ADB5BD" />
-        )}
+        {placeType === 'shop' && <Ionicons name="checkmark-circle" size={24} color="#1B4332" />}
+        {shopCount >= 3 && <Ionicons name="lock-closed" size={24} color="#ADB5BD" />}
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -240,12 +235,8 @@ export default function AddPlaceScreen() {
             <Text style={styles.limitMessage}>لديك الحد الأقصى من الملفات الشخصية (5)</Text>
           )}
         </View>
-        {placeType === 'person' && (
-          <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
-        )}
-        {personCount >= 5 && (
-          <Ionicons name="lock-closed" size={24} color="#ADB5BD" />
-        )}
+        {placeType === 'person' && <Ionicons name="checkmark-circle" size={24} color="#1B4332" />}
+        {personCount >= 5 && <Ionicons name="lock-closed" size={24} color="#ADB5BD" />}
       </TouchableOpacity>
 
       {shopCount >= 1 && personCount >= 1 && (
@@ -256,7 +247,7 @@ export default function AddPlaceScreen() {
         </View>
       )}
     </View>
-  )
+  );
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
@@ -280,10 +271,7 @@ export default function AddPlaceScreen() {
         </View>
       ) : (
         <View>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => setSelectedParent(null)}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedParent(null)}>
             <Ionicons name="chevron-back" size={20} color="#1B4332" />
             <Text style={styles.backButtonText}>عودة</Text>
           </TouchableOpacity>
@@ -311,7 +299,7 @@ export default function AddPlaceScreen() {
         </View>
       )}
     </View>
-  )
+  );
 
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
@@ -378,7 +366,7 @@ export default function AddPlaceScreen() {
         />
       </View>
     </View>
-  )
+  );
 
   const renderStep4 = () => (
     <View style={styles.stepContainer}>
@@ -421,7 +409,7 @@ export default function AddPlaceScreen() {
         <Text style={styles.addServiceButtonText}>إضافة خدمة</Text>
       </TouchableOpacity>
     </View>
-  )
+  );
 
   return (
     <KeyboardAvoidingView
@@ -436,26 +424,21 @@ export default function AddPlaceScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+      >
         <View style={styles.progressContainer}>
           {[1, 2, 3, 4].map((s) => (
             <View key={s} style={styles.progressStep}>
-              <View
-                style={[
-                  styles.progressCircle,
-                  step >= s && styles.progressCircleActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.progressNumber,
-                    step >= s && styles.progressNumberActive,
-                  ]}
-                >
+              <View style={[styles.progressCircle, step >= s && styles.progressCircleActive]}>
+                <Text style={[styles.progressNumber, step >= s && styles.progressNumberActive]}>
                   {s}
                 </Text>
               </View>
-              {s < 4 && <View style={[styles.progressLine, step > s && styles.progressLineActive]} />}
+              {s < 4 && (
+                <View style={[styles.progressLine, step > s && styles.progressLineActive]} />
+              )}
             </View>
           ))}
         </View>
@@ -475,14 +458,12 @@ export default function AddPlaceScreen() {
           {addPlaceMutation.isPending ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.nextButtonText}>
-              {step === 4 ? 'إرسال' : 'التالي'}
-            </Text>
+            <Text style={styles.nextButtonText}>{step === 4 ? 'إرسال' : 'التالي'}</Text>
           )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -737,4 +718,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
   },
-})
+});

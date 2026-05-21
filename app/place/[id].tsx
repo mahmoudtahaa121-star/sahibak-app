@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,181 +9,178 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-} from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useLocalSearchParams, router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import * as Linking from 'expo-linking'
-import * as Sharing from 'expo-sharing'
-import { supabase } from '../../lib/supabase'
-import { Place } from '../../types'
-import { useAuth } from '../../hooks/useAuth'
-import { usePlace } from '../../hooks/usePlace'
-import { useToggleFavorite } from '../../hooks/useFavorites'
-import Skeleton from '../../components/ui/Skeleton'
-import PromptModal from '../../components/ui/PromptModal'
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import * as Linking from 'expo-linking';
+import * as Sharing from 'expo-sharing';
+import { supabase } from '../../lib/supabase';
+import { Place } from '../../types';
+import { useAuth } from '../../hooks/useAuth';
+import { usePlace } from '../../hooks/usePlace';
+import { useToggleFavorite } from '../../hooks/useFavorites';
+import Skeleton from '../../components/ui/Skeleton';
+import PromptModal from '../../components/ui/PromptModal';
 
 export default function PlaceScreen() {
-  const insets = useSafeAreaInsets()
-  const { id } = useLocalSearchParams<{ id: string }>()
-  const { user } = useAuth()
-  const queryClient = useQueryClient()
-  const toggleFavorite = useToggleFavorite()
-  const [favoriteLoading, setFavoriteLoading] = useState(false)
-  const [showReportModal, setShowReportModal] = useState(false)
+  const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const toggleFavorite = useToggleFavorite();
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
-  const { data: place, isLoading, error } = usePlace(id)
+  const { data: place, isLoading, error } = usePlace(id);
 
   const { data: isFavorite } = useQuery({
     queryKey: ['favorite', id, user?.id],
     queryFn: async () => {
-      if (!user) return false
+      if (!user) return false;
       const { data } = await supabase
         .from('favorites')
         .select('id')
         .eq('user_id', user.id)
         .eq('place_id', id)
-        .single()
-      return !!data
+        .single();
+      return !!data;
     },
     enabled: !!user && !!id,
-  })
+  });
 
   // Optimistic update helper
-  const optimisticToggleFavorite = useCallback(async (newFavoriteState: boolean) => {
-    if (!user) return
+  const optimisticToggleFavorite = useCallback(
+    async (newFavoriteState: boolean) => {
+      if (!user) return;
 
-    // Update cache immediately
-    queryClient.setQueryData(['favorite', id, user?.id], newFavoriteState)
+      // Update cache immediately
+      queryClient.setQueryData(['favorite', id, user?.id], newFavoriteState);
 
-    try {
-      // Perform the actual API call
-      if (newFavoriteState) {
-        const { error } = await supabase
-          .from('favorites')
-          .insert({ user_id: user.id, place_id: id })
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('place_id', id)
-        if (error) throw error
+      try {
+        // Perform the actual API call
+        if (newFavoriteState) {
+          const { error } = await supabase
+            .from('favorites')
+            .insert({ user_id: user.id, place_id: id });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('place_id', id);
+          if (error) throw error;
+        }
+
+        // Invalidate to ensure cache is in sync
+        queryClient.invalidateQueries({ queryKey: ['favorite', id, user?.id] });
+      } catch (error) {
+        // Revert on error
+        console.error('Favorite toggle error:', error);
+        queryClient.setQueryData(['favorite', id, user?.id], !newFavoriteState);
+        throw error;
       }
-
-      // Invalidate to ensure cache is in sync
-      queryClient.invalidateQueries({ queryKey: ['favorite', id, user?.id] })
-    } catch (error) {
-      // Revert on error
-      console.error('Favorite toggle error:', error)
-      queryClient.setQueryData(['favorite', id, user?.id], !newFavoriteState)
-      throw error
-    }
-  }, [user, id, queryClient])
+    },
+    [user, id, queryClient]
+  );
 
   const handleWhatsApp = useCallback(() => {
     if (place?.whatsapp) {
       // Remove leading 0 if present and add Egyptian country code
-      const cleanedNumber = place.whatsapp.replace(/^0/, '')
-      Linking.openURL(`https://wa.me/20${cleanedNumber}`)
+      const cleanedNumber = place.whatsapp.replace(/^0/, '');
+      Linking.openURL(`https://wa.me/20${cleanedNumber}`);
     }
-  }, [place?.whatsapp])
+  }, [place?.whatsapp]);
 
   const handleCall = useCallback(() => {
     if (place?.phone) {
-      Linking.openURL(`tel:${place.phone}`)
+      Linking.openURL(`tel:${place.phone}`);
     }
-  }, [place?.phone])
+  }, [place?.phone]);
 
   const handleShare = useCallback(async () => {
     if (place) {
       try {
-        const isAvailable = await Sharing.isAvailableAsync()
+        const isAvailable = await Sharing.isAvailableAsync();
         if (Platform.OS !== 'web' && isAvailable) {
-          await Sharing.shareAsync(`${place.name_ar}\n${place.phone}\nعبر صاحبك`)
+          await Sharing.shareAsync(`${place.name_ar}\n${place.phone}\nعبر صاحبك`);
         } else {
-          Alert.alert('غير متاح', 'مشاركة الروابط غير متاحة على هذا المنصة')
+          Alert.alert('غير متاح', 'مشاركة الروابط غير متاحة على هذا المنصة');
         }
       } catch (error) {
-        console.error('Share error:', error)
+        console.error('Share error:', error);
         // Share failed - user cancelled or error occurred (silent is OK here)
       }
     }
-  }, [place]) 
+  }, [place]);
 
   const handleToggleFavorite = useCallback(async () => {
     if (!user) {
-      router.replace('/auth/login')
-      return
+      router.replace('/auth/login');
+      return;
     }
 
-    setFavoriteLoading(true)
+    setFavoriteLoading(true);
 
     // If removing from favorites, show confirmation
     if (isFavorite) {
-      Alert.alert(
-        'تأكيد الحذف',
-        'هل أنت متأكد من حذف هذا المكان من المفضلة؟',
-        [
-          {
-            text: 'إلغاء',
-            style: 'cancel',
-            onPress: () => setFavoriteLoading(false),
+      Alert.alert('تأكيد الحذف', 'هل أنت متأكد من حذف هذا المكان من المفضلة؟', [
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+          onPress: () => setFavoriteLoading(false),
+        },
+        {
+          text: 'حذف',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await optimisticToggleFavorite(false);
+              Alert.alert('تم', 'تم حذف المكان من المفضلة');
+            } catch (error) {
+              console.error('Favorite removal error:', error);
+              Alert.alert('خطأ', 'حدث خطأ أثناء حذف المفضلة. يرجى المحاولة مرة أخرى');
+            } finally {
+              setFavoriteLoading(false);
+            }
           },
-          {
-            text: 'حذف',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await optimisticToggleFavorite(false)
-                Alert.alert('تم', 'تم حذف المكان من المفضلة')
-              } catch (error) {
-                console.error('Favorite removal error:', error)
-                Alert.alert('خطأ', 'حدث خطأ أثناء حذف المفضلة. يرجى المحاولة مرة أخرى')
-              } finally {
-                setFavoriteLoading(false)
-              }
-            },
-          },
-        ]
-      )
-      return
+        },
+      ]);
+      return;
     }
 
     // Adding to favorites - no confirmation needed
     try {
-      await optimisticToggleFavorite(true)
-      Alert.alert('تم', 'تمت إضافة المكان إلى المفضلة')
+      await optimisticToggleFavorite(true);
+      Alert.alert('تم', 'تمت إضافة المكان إلى المفضلة');
     } catch (error) {
-      console.error('Favorite addition error:', error)
-      Alert.alert('خطأ', 'حدث خطأ أثناء إضافة المفضلة. يرجى المحاولة مرة أخرى')
+      console.error('Favorite addition error:', error);
+      Alert.alert('خطأ', 'حدث خطأ أثناء إضافة المفضلة. يرجى المحاولة مرة أخرى');
     } finally {
-      setFavoriteLoading(false)
+      setFavoriteLoading(false);
     }
-  }, [user, isFavorite, optimisticToggleFavorite])
+  }, [user, isFavorite, optimisticToggleFavorite]);
 
   const handleReport = useCallback(() => {
     if (!user) {
-      router.replace('/auth/login')
-      return
+      router.replace('/auth/login');
+      return;
     }
 
-    setShowReportModal(true)
-  }, [user])
+    setShowReportModal(true);
+  }, [user]);
 
-  const handleReportSubmit = useCallback(async (text: string) => {
-    if (!text || text.trim().length === 0) {
-      Alert.alert('خطأ', 'الرجاء كتابة سبب الإبلاغ')
-      return
-    }
+  const handleReportSubmit = useCallback(
+    async (text: string) => {
+      if (!text || text.trim().length === 0) {
+        Alert.alert('خطأ', 'الرجاء كتابة سبب الإبلاغ');
+        return;
+      }
 
-    if (text && place) {
-      Alert.alert(
-        'تأكيد الإرسال',
-        'هل أنت متأكد من إرسال هذا البلاغ؟',
-        [
+      if (text && place) {
+        Alert.alert('تأكيد الإرسال', 'هل أنت متأكد من إرسال هذا البلاغ؟', [
           {
             text: 'إلغاء',
             style: 'cancel',
@@ -191,28 +188,29 @@ export default function PlaceScreen() {
           {
             text: 'إرسال',
             onPress: async () => {
-              if (!user) return
+              if (!user) return;
 
               try {
                 const { error } = await supabase.from('reports').insert({
                   place_id: place.id,
                   user_id: user.id,
                   reason: text.trim(),
-                })
+                });
 
-                if (error) throw error
+                if (error) throw error;
 
-                Alert.alert('شكراً', 'تم إرسال بلاغك بنجاح')
+                Alert.alert('شكراً', 'تم إرسال بلاغك بنجاح');
               } catch (error) {
-                console.error('Report submission error:', error)
-                Alert.alert('خطأ', 'حدث خطأ أثناء إرسال البلاغ. يرجى المحاولة مرة أخرى')
+                console.error('Report submission error:', error);
+                Alert.alert('خطأ', 'حدث خطأ أثناء إرسال البلاغ. يرجى المحاولة مرة أخرى');
               }
             },
           },
-        ]
-      )
-    }
-  }, [place, user])
+        ]);
+      }
+    },
+    [place, user]
+  );
 
   if (isLoading) {
     return (
@@ -231,7 +229,7 @@ export default function PlaceScreen() {
           <Skeleton width={180} height={16} borderRadius={4} />
         </View>
       </View>
-    )
+    );
   }
 
   if (error || !place) {
@@ -239,11 +237,11 @@ export default function PlaceScreen() {
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>حدث خطأ في تحميل المكان</Text>
       </View>
-    )
+    );
   }
 
-  const category = place.categories?.[0]
-  const placeTypeBadge = place.place_type === 'shop' ? '🏪 محل' : '👤 شخص'
+  const category = place.categories?.[0];
+  const placeTypeBadge = place.place_type === 'shop' ? '🏪 محل' : '👤 شخص';
 
   return (
     <View style={styles.container}>
@@ -284,12 +282,8 @@ export default function PlaceScreen() {
               {category.icon} {category.name_ar}
             </Text>
           )}
-          {place.address_text && (
-            <Text style={styles.addressText}>📍 {place.address_text}</Text>
-          )}
-          {place.description_ar && (
-            <Text style={styles.description}>{place.description_ar}</Text>
-          )}
+          {place.address_text && <Text style={styles.addressText}>📍 {place.address_text}</Text>}
+          {place.description_ar && <Text style={styles.description}>{place.description_ar}</Text>}
         </View>
 
         {place.latitude && place.longitude && (
@@ -306,8 +300,8 @@ export default function PlaceScreen() {
               borderColor: '#E9ECEF',
             }}
             onPress={() => {
-              const url = `https://maps.google.com/?q=${place.latitude},${place.longitude}`
-              Linking.openURL(url)
+              const url = `https://maps.google.com/?q=${place.latitude},${place.longitude}`;
+              Linking.openURL(url);
             }}
           >
             <Text style={{ fontSize: 32, marginBottom: 8 }}>🗺</Text>
@@ -381,7 +375,7 @@ export default function PlaceScreen() {
         onCancel={() => setShowReportModal(false)}
       />
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -579,4 +573,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ADB5BD',
   },
-})
+});

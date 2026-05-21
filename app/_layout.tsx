@@ -1,41 +1,40 @@
-import { useEffect } from 'react'
-import { Slot, useSegments, useRouter } from 'expo-router'
-import { View, Text, StyleSheet, I18nManager, ActivityIndicator } from 'react-native'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { useFonts } from 'expo-font'
-import * as SplashScreen from 'expo-splash-screen'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { queryClient } from '../lib/queryClient'
-import { useAuth } from '../hooks/useAuth'
-import ErrorBoundary from '../components/ErrorBoundary'
+import { useEffect } from 'react';
+import { Slot, useSegments, useRouter } from 'expo-router';
+import { View, Text, StyleSheet, I18nManager, ActivityIndicator } from 'react-native';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { queryClient } from '../lib/queryClient';
+import { useAuth } from '../hooks/useAuth';
+import ErrorBoundary from '../components/ErrorBoundary';
 
-SplashScreen.preventAutoHideAsync()
+SplashScreen.preventAutoHideAsync();
 
 function AuthGate() {
-  const { user, loading } = useAuth()
-  const segments = useSegments()
-  const router = useRouter()
+  const { user, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    if (loading) return
+    if (loading) return;
 
-    const inAuthGroup = segments[0] === 'auth'
-    const inProtectedGroup =
-      segments[0] === 'provider' || segments[0] === 'admin'
+    const inAuthGroup = segments[0] === 'auth';
+    const inProtectedGroup = segments[0] === 'provider' || segments[0] === 'admin';
 
     if (user && inAuthGroup) {
-      router.replace('/')
+      router.replace('/');
     } else if (!user && inProtectedGroup) {
       // Pass the intended redirect URL as a query parameter
-      const intendedPath = '/' + segments.join('/')
+      const intendedPath = '/' + segments.join('/');
       router.replace({
         pathname: '/auth/login',
-        params: { redirect: intendedPath }
-      })
+        params: { redirect: intendedPath },
+      });
     }
-  }, [user, loading, segments])
+  }, [user, loading, segments]);
 
-  return <Slot />
+  return <Slot />;
 }
 
 export default function RootLayout() {
@@ -43,19 +42,19 @@ export default function RootLayout() {
     Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
     Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
     Cairo_700Bold: require('../assets/fonts/Cairo-Bold.ttf'),
-  })
+  });
 
   useEffect(() => {
     if (!I18nManager.isRTL) {
-      I18nManager.forceRTL(true)
+      I18nManager.forceRTL(true);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync()
+      SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError])
+  }, [fontsLoaded, fontError]);
 
   return (
     <SafeAreaProvider>
@@ -71,7 +70,7 @@ export default function RootLayout() {
         </ErrorBoundary>
       </QueryClientProvider>
     </SafeAreaProvider>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -86,4 +85,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1B4332',
   },
-})
+});

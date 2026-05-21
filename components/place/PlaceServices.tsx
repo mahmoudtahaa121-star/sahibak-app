@@ -1,20 +1,20 @@
-import { View, Text, StyleSheet } from 'react-native'
-import { PlaceService } from '../../types'
+import { View, Text, StyleSheet } from 'react-native';
+import { PlaceService } from '../../types';
 
 interface Props {
-  services: PlaceService[]
+  services: PlaceService[];
 }
 
 export default function PlaceServices({ services }: Props) {
-  if (!services || services.length === 0) return null
+  if (!services || services.length === 0) return null;
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🛠 الخدمات المتاحة</Text>
       {services.map((service, index) => (
-        <View key={service.id} style={[
-          styles.serviceItem,
-          index < services.length - 1 && styles.divider
-        ]}>
+        <View
+          key={service.id}
+          style={[styles.serviceItem, index < services.length - 1 && styles.divider]}
+        >
           <View style={styles.bullet} />
           <View style={styles.serviceContent}>
             <Text style={styles.serviceName}>{service.name_ar}</Text>
@@ -25,7 +25,7 @@ export default function PlaceServices({ services }: Props) {
         </View>
       ))}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -76,4 +76,4 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 2,
   },
-})
+});

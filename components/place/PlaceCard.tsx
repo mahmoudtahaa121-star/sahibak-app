@@ -1,18 +1,18 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { Place } from '../../types'
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Place } from '../../types';
 
 interface PlaceCardProps {
-  place: Place
-  onPress: () => void
-  onRemoveFavorite?: () => void
+  place: Place;
+  onPress: () => void;
+  onRemoveFavorite?: () => void;
 }
 
 export default function PlaceCard({ place, onPress, onRemoveFavorite }: PlaceCardProps) {
-  const category = place.categories?.[0]
-  const placeTypeBadge = place.place_type === 'shop' ? '🏪 محل' : '👤 شخص'
-  const badgeBg = place.place_type === 'shop' ? '#F8F9FA' : '#F5E6C0'
-  const badgeText = place.place_type === 'shop' ? '#1B4332' : '#856404'
+  const category = place.categories?.[0];
+  const placeTypeBadge = place.place_type === 'shop' ? '🏪 محل' : '👤 شخص';
+  const badgeBg = place.place_type === 'shop' ? '#F8F9FA' : '#F5E6C0';
+  const badgeText = place.place_type === 'shop' ? '#1B4332' : '#856404';
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
@@ -28,9 +28,7 @@ export default function PlaceCard({ place, onPress, onRemoveFavorite }: PlaceCar
         <View style={styles.row1}>
           <Text style={styles.name}>{place.name_ar}</Text>
           <View style={[styles.badge, { backgroundColor: badgeBg }]}>
-            <Text style={[styles.badgeText, { color: badgeText }]}>
-              {placeTypeBadge}
-            </Text>
+            <Text style={[styles.badgeText, { color: badgeText }]}>{placeTypeBadge}</Text>
           </View>
         </View>
 
@@ -65,7 +63,7 @@ export default function PlaceCard({ place, onPress, onRemoveFavorite }: PlaceCar
         <Ionicons name="chevron-forward" size={20} color="#ADB5BD" />
       </View>
     </TouchableOpacity>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -159,4 +157,4 @@ const styles = StyleSheet.create({
   removeButton: {
     padding: 4,
   },
-})
+});

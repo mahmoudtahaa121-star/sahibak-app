@@ -1,23 +1,30 @@
-import { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
-import { useArea } from '../../hooks/useArea'
-import { useOffers } from '../../hooks/useOffers'
-import OfferCard from '../../components/offers/OfferCard'
-import Skeleton from '../../components/ui/Skeleton'
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useArea } from '../../hooks/useArea';
+import { useOffers } from '../../hooks/useOffers';
+import OfferCard from '../../components/offers/OfferCard';
+import Skeleton from '../../components/ui/Skeleton';
 
 export default function OffersScreen() {
-  const insets = useSafeAreaInsets()
-  const { selectedArea } = useArea()
-  const { data: offers, isLoading, refetch } = useOffers(selectedArea)
-  const [refreshing, setRefreshing] = useState(false)
+  const insets = useSafeAreaInsets();
+  const { selectedArea } = useArea();
+  const { data: offers, isLoading, refetch } = useOffers(selectedArea);
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
-    setRefreshing(true)
-    await refetch()
-    setRefreshing(false)
-  }
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -40,7 +47,13 @@ export default function OffersScreen() {
         {isLoading ? (
           <View style={styles.skeletonContainer}>
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} width={350} height={120} borderRadius={14} style={styles.skeletonCard} />
+              <Skeleton
+                key={i}
+                width={350}
+                height={120}
+                borderRadius={14}
+                style={styles.skeletonCard}
+              />
             ))}
           </View>
         ) : offers && offers.length > 0 ? (
@@ -58,7 +71,7 @@ export default function OffersScreen() {
         )}
       </ScrollView>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -107,4 +120,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6C757D',
   },
-})
+});

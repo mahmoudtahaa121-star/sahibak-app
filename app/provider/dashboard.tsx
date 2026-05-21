@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -7,34 +7,34 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-} from 'react-native'
-import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { useAuth } from '../../hooks/useAuth'
-import { Place } from '../../types'
-import { getStatusBadge } from '../../utils/badges'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useProviderPlaces } from '../../hooks/useProviderPlaces'
-import Skeleton from '../../components/ui/Skeleton'
+} from 'react-native';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../hooks/useAuth';
+import { Place } from '../../types';
+import { getStatusBadge } from '../../utils/badges';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useProviderPlaces } from '../../hooks/useProviderPlaces';
+import Skeleton from '../../components/ui/Skeleton';
 
 export default function ProviderDashboardScreen() {
-  const insets = useSafeAreaInsets()
-  const { user, profile, loading: authLoading } = useAuth()
-  const { data: places, isLoading, refetch } = useProviderPlaces(user?.id)
-  const [refreshing, setRefreshing] = useState(false)
+  const insets = useSafeAreaInsets();
+  const { user, profile, loading: authLoading } = useAuth();
+  const { data: places, isLoading, refetch } = useProviderPlaces(user?.id);
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
-    setRefreshing(true)
-    await refetch()
-    setRefreshing(false)
-  }
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
   if (authLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator color="#1B4332" />
       </View>
-    )
+    );
   }
 
   if (!user || !profile) {
@@ -43,15 +43,12 @@ export default function ProviderDashboardScreen() {
         <View style={styles.messageContainer}>
           <Ionicons name="lock-closed" size={48} color="#ADB5BD" />
           <Text style={styles.messageTitle}>يجب تسجيل الدخول</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push('/auth/login')}
-          >
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/auth/login')}>
             <Text style={styles.buttonText}>تسجيل الدخول</Text>
           </TouchableOpacity>
         </View>
       </View>
-    )
+    );
   }
 
   if (profile.role !== 'provider') {
@@ -60,20 +57,17 @@ export default function ProviderDashboardScreen() {
         <View style={styles.messageContainer}>
           <Ionicons name="storefront" size={48} color="#ADB5BD" />
           <Text style={styles.messageTitle}>هذه الصفحة للمزودين فقط</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.replace('/')}
-          >
+          <TouchableOpacity style={styles.button} onPress={() => router.replace('/')}>
             <Text style={styles.buttonText}>العودة للرئيسية</Text>
           </TouchableOpacity>
         </View>
       </View>
-    )
+    );
   }
 
-  const totalPlaces = places?.length || 0
-  const approvedPlaces = places?.filter((p: Place) => p.status === 'approved').length || 0
-  const pendingPlaces = places?.filter((p: Place) => p.status === 'pending').length || 0
+  const totalPlaces = places?.length || 0;
+  const approvedPlaces = places?.filter((p: Place) => p.status === 'approved').length || 0;
+  const pendingPlaces = places?.filter((p: Place) => p.status === 'pending').length || 0;
 
   return (
     <ScrollView
@@ -108,10 +102,7 @@ export default function ProviderDashboardScreen() {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => router.push('/provider/add-place')}
-      >
+      <TouchableOpacity style={styles.addButton} onPress={() => router.push('/provider/add-place')}>
         <Ionicons name="add" size={24} color="#FFFFFF" />
         <Text style={styles.addButtonText}>إضافة مكان جديد</Text>
       </TouchableOpacity>
@@ -143,16 +134,14 @@ export default function ProviderDashboardScreen() {
       ) : (
         <View style={styles.placesList}>
           {places?.map((place: Place) => {
-            const badge = getStatusBadge(place.status)
-            const category = place.categories?.[0]
+            const badge = getStatusBadge(place.status);
+            const category = place.categories?.[0];
             return (
               <View key={place.id} style={styles.placeCard}>
                 <View style={styles.placeHeader}>
                   <Text style={styles.placeName}>{place.name_ar}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
-                    <Text style={[styles.statusText, { color: badge.color }]}>
-                      {badge.text}
-                    </Text>
+                    <Text style={[styles.statusText, { color: badge.color }]}>{badge.text}</Text>
                   </View>
                 </View>
 
@@ -177,12 +166,12 @@ export default function ProviderDashboardScreen() {
                   <Text style={styles.editButtonText}>تعديل</Text>
                 </TouchableOpacity>
               </View>
-            )
+            );
           })}
         </View>
       )}
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -374,4 +363,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
   },
-})
+});

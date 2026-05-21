@@ -1,22 +1,22 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface Props {
-  children: ReactNode
+  children: ReactNode;
 }
 
 interface State {
-  hasError: boolean
+  hasError: boolean;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
-    super(props)
-    this.state = { hasError: false }
+    super(props);
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(): State {
-    return { hasError: true }
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -24,8 +24,8 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false })
-  }
+    this.setState({ hasError: false });
+  };
 
   render() {
     if (this.state.hasError) {
@@ -38,10 +38,10 @@ export default class ErrorBoundary extends Component<Props, State> {
             <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
           </TouchableOpacity>
         </View>
-      )
+      );
     }
 
-    return this.props.children
+    return this.props.children;
   }
 }
 
@@ -81,4 +81,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
   },
-})
+});

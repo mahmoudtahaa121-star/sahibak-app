@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Place } from '../../types';
+import LazyImage from '../ui/LazyImage';
 
 interface PlaceCardProps {
   place: Place;
@@ -17,7 +18,11 @@ export default function PlaceCard({ place, onPress, onRemoveFavorite }: PlaceCar
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       {place.image_url ? (
-        <Image source={{ uri: place.image_url }} style={styles.image} />
+        <LazyImage
+          source={{ uri: place.image_url }}
+          style={styles.image}
+          showLoadingIndicator={false}
+        />
       ) : (
         <View style={styles.imagePlaceholder}>
           <Text style={styles.emoji}>{category?.icon || '📍'}</Text>

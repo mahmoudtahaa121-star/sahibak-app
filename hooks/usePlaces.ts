@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Place } from '../types';
 import { logger } from '../utils/logger';
+import { performanceMonitor } from '../utils/performance';
 
 const PLACES_PER_PAGE = 20;
 
@@ -10,6 +11,8 @@ export function usePlaces(area: string) {
     queryKey: ['places', area, 'infinite'],
     initialPageParam: 0,
     queryFn: async ({ pageParam = 0 }) => {
+      performanceMonitor.startTimer('fetchPlaces');
+      
       const from = pageParam * PLACES_PER_PAGE;
       const to = from + PLACES_PER_PAGE - 1;
 
@@ -34,8 +37,16 @@ export function usePlaces(area: string) {
 
       if (error) {
         logger.supabaseError('fetchPlaces', error, { area, page: pageParam });
+        performanceMonitor.endTimer('fetchPlaces', 'api', { area, page: pageParam, status: 'error' });
         throw error;
       }
+
+      performanceMonitor.endTimer('fetchPlaces', 'api', { 
+        area, 
+        page: pageParam, 
+        status: 'success',
+        count: data?.length || 0 
+      });
 
       return (data ?? []).map((p: any) => ({
         ...p,
@@ -57,6 +68,8 @@ export function usePlacesSimple(area: string) {
   return useQuery<Place[]>({
     queryKey: ['places', area, 'simple'],
     queryFn: async () => {
+      performanceMonitor.startTimer('fetchPlacesSimple');
+      
       const { data, error } = await supabase
         .from('places')
         .select(
@@ -75,10 +88,19 @@ export function usePlacesSimple(area: string) {
         .eq('area', area)
         .order('created_at', { ascending: false })
         .limit(20);
+      
       if (error) {
         logger.supabaseError('fetchPlacesSimple', error, { area });
+        performanceMonitor.endTimer('fetchPlacesSimple', 'api', { area, status: 'error' });
         throw error;
       }
+      
+      performanceMonitor.endTimer('fetchPlacesSimple', 'api', { 
+        area, 
+        status: 'success',
+        count: data?.length || 0 
+      });
+      
       return (data ?? []).map((p: any) => ({
         ...p,
         categories: p.categories?.map((c: any) => c.category) ?? [],

@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Offer } from '../../types';
+import LazyImage from '../ui/LazyImage';
 
 interface OfferCardProps {
   offer: Offer;
@@ -27,7 +28,11 @@ export default function OfferCard({ offer, onPress }: OfferCardProps) {
     >
       <View style={styles.topRow}>
         {offer.place?.image_url ? (
-          <Image source={{ uri: offer.place.image_url }} style={styles.placeImage} />
+          <LazyImage
+            source={{ uri: offer.place.image_url }}
+            style={styles.placeImage}
+            showLoadingIndicator={false}
+          />
         ) : (
           <View style={styles.imagePlaceholder}>
             <Text style={styles.placeholderEmoji}>📍</Text>

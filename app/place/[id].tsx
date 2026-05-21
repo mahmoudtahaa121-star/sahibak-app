@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
   ActivityIndicator,
   Platform,
@@ -24,6 +23,7 @@ import { usePlace } from '../../hooks/usePlace';
 import { useToggleFavorite } from '../../hooks/useFavorites';
 import Skeleton from '../../components/ui/Skeleton';
 import PromptModal from '../../components/ui/PromptModal';
+import LazyImage from '../../components/ui/LazyImage';
 
 export default function PlaceScreen() {
   const insets = useSafeAreaInsets();
@@ -266,7 +266,10 @@ export default function PlaceScreen() {
         </View>
 
         {place.image_url ? (
-          <Image source={{ uri: place.image_url }} style={styles.coverImage} />
+          <LazyImage
+            source={{ uri: place.image_url }}
+            style={styles.coverImage}
+          />
         ) : (
           <View style={styles.coverPlaceholder}>
             <Text style={styles.coverEmoji}>{category?.icon || '📍'}</Text>

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { queryClient } from '../lib/queryClient';
 import { storage } from '../lib/storage';
 import { Profile } from '../types';
+import { performanceMonitor } from '../utils/performance';
 
 export function useAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -37,24 +38,33 @@ export function useAuth() {
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    performanceMonitor.startTimer('fetchProfile');
+    
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
 
     if (data && !error) {
       if (data.is_banned) {
         await signOut();
         Alert.alert('تم حظر حسابك', 'تم حظر حسابك من قبل الإدارة');
+        performanceMonitor.endTimer('fetchProfile', 'api', { userId, status: 'banned' });
         return;
       }
       setProfile(data);
+      performanceMonitor.endTimer('fetchProfile', 'api', { userId, status: 'success' });
     } else if (error) {
       setProfile(null);
+      performanceMonitor.endTimer('fetchProfile', 'api', { userId, status: 'error' });
     }
   };
 
   const signOut = async () => {
+    performanceMonitor.startTimer('signOut');
+    
     await supabase.auth.signOut();
     queryClient.clear();
     storage?.clearAll();
+    
+    performanceMonitor.endTimer('signOut', 'api');
   };
 
   return { user, profile, loading, signOut };

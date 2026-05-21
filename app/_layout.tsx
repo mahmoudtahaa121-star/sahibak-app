@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from '../lib/queryClient';
 import { useAuth } from '../hooks/useAuth';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { PerformanceMonitor } from '../components/ui/PerformanceMonitor';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -65,7 +66,10 @@ export default function RootLayout() {
               <Text style={styles.splashText}>صاحبك</Text>
             </View>
           ) : (
-            <AuthGate />
+            <>
+              <AuthGate />
+              <PerformanceMonitor />
+            </>
           )}
         </ErrorBoundary>
       </QueryClientProvider>

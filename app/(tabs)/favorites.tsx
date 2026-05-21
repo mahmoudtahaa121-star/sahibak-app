@@ -9,7 +9,7 @@ import PlaceCard from '../../components/place/PlaceCard'
 
 export default function FavoritesScreen() {
   const insets = useSafeAreaInsets()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const router = useRouter()
   const toggleFavorite = useToggleFavorite()
 
@@ -24,14 +24,14 @@ export default function FavoritesScreen() {
     })
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return (
       <View style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.emoji}>❤️</Text>
           <Text style={styles.title}>سجّل دخولك لحفظ مفضلاتك</Text>
           <Text style={styles.subtitle}>احفظ الأماكن اللي بتحبها وارجعلها بسهولة</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/auth/login')}>
+          <TouchableOpacity style={styles.button} onPress={() => router.replace({ pathname: '/auth/login', params: { redirect: '/(tabs)/favorites' } })}>
             <Text style={styles.buttonText}>تسجيل الدخول</Text>
           </TouchableOpacity>
         </View>

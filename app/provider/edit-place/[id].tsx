@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../../hooks/useAuth'
 import { supabase } from '../../../lib/supabase'
 import { Category, Place, PlaceService } from '../../../types'
+import { isValidEgyptianPhone } from '../../../utils/validation'
 
 type Step = 1 | 2 | 3 | 4
 type PlaceType = 'shop' | 'person'
@@ -53,6 +54,7 @@ export default function EditPlaceScreen() {
     whatsapp: string | null
     description_ar: string | null
     categoryIds: number[]
+    services: Service[]
   } | null>(null)
 
   useEffect(() => {
@@ -83,15 +85,6 @@ export default function EditPlaceScreen() {
       const categoryIds = place.place_categories?.map((pc: any) => pc.category_id) || []
       setSelectedCategories(categoryIds)
 
-      // Store original values for change detection
-      setOriginalData({
-        name_ar: place.name_ar || '',
-        phone: place.phone || '',
-        whatsapp: place.whatsapp || null,
-        description_ar: place.description_ar || null,
-        categoryIds,
-      })
-
       const existingServices = place.place_services?.map((ps: PlaceService) => ({
         id: ps.id,
         name_ar: ps.name_ar,
@@ -99,6 +92,16 @@ export default function EditPlaceScreen() {
       })) || []
       
       setServices(existingServices.length > 0 ? existingServices : [{ id: '1', name_ar: '', description_ar: '' }])
+
+      // Store original values for change detection
+      setOriginalData({
+        name_ar: place.name_ar || '',
+        phone: place.phone || '',
+        whatsapp: place.whatsapp || null,
+        description_ar: place.description_ar || null,
+        categoryIds,
+        services: existingServices.length > 0 ? existingServices : [{ id: '1', name_ar: '', description_ar: '' }],
+      })
     } catch (error) {
       Alert.alert('خطأ', 'فشل تحميل بيانات المكان')
       router.back()
@@ -129,7 +132,7 @@ export default function EditPlaceScreen() {
       .order('sort_order')
 
     if (data && !error) {
-      setSelectedParent({ ...selectedParent!, children: data } as any)
+      setSelectedParent({ ...selectedParent!, children: data })
     }
   }
 
@@ -187,6 +190,14 @@ export default function EditPlaceScreen() {
       Alert.alert('خطأ', 'الرجاء إدخال رقم التليفون')
       return false
     }
+    if (!isValidEgyptianPhone(phone.trim())) {
+      Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
+      return false
+    }
+    if (whatsapp.trim() && !isValidEgyptianPhone(whatsapp.trim())) {
+      Alert.alert('خطأ', 'رقم الواتساب غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
+      return false
+    }
     if (placeType === 'shop' && !addressText.trim()) {
       Alert.alert('خطأ', 'الرجاء إدخال العنوان')
       return false
@@ -214,28 +225,20 @@ export default function EditPlaceScreen() {
       const whatsappChanged = (whatsapp.trim() || null) !== originalData.whatsapp
       const descriptionChanged = (descriptionAr.trim() || null) !== originalData.description_ar
       const categoriesChanged = !arraysEqual(selectedCategories, originalData.categoryIds)
+      const servicesChanged = JSON.stringify(services.filter(s => s.name_ar.trim())) !==
+        JSON.stringify(originalData.services || [])
 
       // Group A: Direct publish (no approval needed)
       // Group B: Requires admin approval
       const groupAChanged = phoneChanged || whatsappChanged || descriptionChanged
       const groupBChanged = nameChanged || categoriesChanged
 
-      // Always update services directly
-      await supabase.from('place_services').delete().eq('place_id', id)
-      const validServices = services.filter(s => s.name_ar.trim())
-      for (const service of validServices) {
-        await supabase.from('place_services').insert({
-          place_id: id,
-          name_ar: service.name_ar.trim(),
-          description_ar: service.description_ar.trim() || null,
-        })
-      }
-
       if (groupBChanged) {
-        // If any Group B field changed, create edit requests
+        // If any Group B field changed, ALL changes go through edit requests for consistency
         if (nameChanged) {
           await supabase.from('place_edit_requests').insert({
             place_id: id,
+            provider_id: user.id,
             field_name: 'name_ar',
             old_value: originalData.name_ar,
             new_value: nameAr.trim(),
@@ -246,6 +249,7 @@ export default function EditPlaceScreen() {
         if (categoriesChanged) {
           await supabase.from('place_edit_requests').insert({
             place_id: id,
+            provider_id: user.id,
             field_name: 'category_ids',
             old_value: JSON.stringify(originalData.categoryIds),
             new_value: JSON.stringify(selectedCategories),
@@ -253,7 +257,59 @@ export default function EditPlaceScreen() {
           })
         }
 
-        // Still update Group A fields directly
+        // Group A fields also go through edit requests when Group B changed
+        if (phoneChanged) {
+          await supabase.from('place_edit_requests').insert({
+            place_id: id,
+            provider_id: user.id,
+            field_name: 'phone',
+            old_value: originalData.phone,
+            new_value: phone.trim(),
+            status: 'pending',
+          })
+        }
+
+        if (whatsappChanged) {
+          await supabase.from('place_edit_requests').insert({
+            place_id: id,
+            provider_id: user.id,
+            field_name: 'whatsapp',
+            old_value: originalData.whatsapp || '',
+            new_value: whatsapp.trim() || '',
+            status: 'pending',
+          })
+        }
+
+        if (descriptionChanged) {
+          await supabase.from('place_edit_requests').insert({
+            place_id: id,
+            provider_id: user.id,
+            field_name: 'description_ar',
+            old_value: originalData.description_ar || '',
+            new_value: descriptionAr.trim() || '',
+            status: 'pending',
+          })
+        }
+
+        // Services also go through edit requests when Group B changed
+        if (servicesChanged) {
+          await supabase.from('place_edit_requests').insert({
+            place_id: id,
+            provider_id: user.id,
+            field_name: 'services',
+            old_value: JSON.stringify(originalData.services || []),
+            new_value: JSON.stringify(services.filter(s => s.name_ar.trim())),
+            status: 'pending',
+          })
+        }
+
+        Alert.alert(
+          'تم الإرسال',
+          'تم إرسال طلب التعديل للمراجعة ⏳',
+          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
+        )
+      } else if (groupAChanged || servicesChanged) {
+        // Only Group A fields or services changed - update directly
         if (groupAChanged) {
           await supabase
             .from('places')
@@ -265,21 +321,16 @@ export default function EditPlaceScreen() {
             .eq('id', id)
         }
 
-        Alert.alert(
-          'تم الإرسال',
-          'تم إرسال طلب التعديل للمراجعة ⏳',
-          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
-        )
-      } else if (groupAChanged) {
-        // Only Group A fields changed - update directly
-        await supabase
-          .from('places')
-          .update({
-            phone: phone.trim(),
-            whatsapp: whatsapp.trim() || null,
-            description_ar: descriptionAr.trim() || null,
+        // Update services directly
+        await supabase.from('place_services').delete().eq('place_id', id)
+        const validServices = services.filter(s => s.name_ar.trim())
+        for (const service of validServices) {
+          await supabase.from('place_services').insert({
+            place_id: id,
+            name_ar: service.name_ar.trim(),
+            description_ar: service.description_ar.trim() || null,
           })
-          .eq('id', id)
+        }
 
         Alert.alert(
           'تم التحديث',
@@ -287,14 +338,15 @@ export default function EditPlaceScreen() {
           [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
         )
       } else {
-        // Only services changed
+        // No changes
         Alert.alert(
-          'تم التحديث',
-          'تم تحديث الخدمات بنجاح ✅',
-          [{ text: 'حسناً', onPress: () => router.replace('/provider/dashboard') }]
+          'لا توجد تغييرات',
+          'لم تقم بإجراء أي تغييرات',
+          [{ text: 'حسناً', onPress: () => router.back() }]
         )
       }
     } catch (error) {
+      console.error('Edit place error:', error)
       Alert.alert('خطأ', 'فشل تحديث البيانات')
     } finally {
       setLoading(false)
@@ -384,7 +436,7 @@ export default function EditPlaceScreen() {
           <Text style={styles.parentCategoryName}>{selectedParent.name_ar}</Text>
 
           <View style={styles.categoriesGrid}>
-            {(selectedParent as any).children?.map((child: Category) => (
+            {selectedParent.children?.map((child: Category) => (
               <TouchableOpacity
                 key={child.id}
                 style={[

@@ -13,7 +13,10 @@ export function useParentCategories() {
         .eq('is_active', true)
         .eq('show_on_home', true)
         .order('sort_order')
-      if (error) throw error
+      if (error) {
+        console.error('useParentCategories error:', error)
+        throw error
+      }
       return data ?? []
     },
   })
@@ -30,7 +33,10 @@ export function useChildCategories(parentId: number | null) {
         .eq('parent_id', parentId)
         .eq('is_active', true)
         .order('sort_order')
-      if (error) throw error
+      if (error) {
+        console.error('useChildCategories error:', error)
+        throw error
+      }
       return data ?? []
     },
     enabled: !!parentId,

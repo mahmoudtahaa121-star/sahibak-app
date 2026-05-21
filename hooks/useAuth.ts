@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Alert } from 'react-native'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { queryClient } from '../lib/queryClient'
@@ -43,6 +44,11 @@ export function useAuth() {
       .single()
 
     if (data && !error) {
+      if (data.is_banned) {
+        await signOut()
+        Alert.alert('تم حظر حسابك', 'تم حظر حسابك من قبل الإدارة')
+        return
+      }
       setProfile(data)
     } else if (error) {
       setProfile(null)

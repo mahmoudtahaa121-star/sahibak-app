@@ -12,20 +12,28 @@ import {
   ScrollView,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
+import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
+import { isValidEgyptianPhone, isValidPassword, isValidEmail } from '../../utils/validation'
 
 type Role = 'user' | 'provider'
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets()
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>()
   const [role, setRole] = useState<Role | null>(null)
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const handleBack = () => {
+    // Redirect to the intended page or home if not specified
+    const targetPath = redirect || '/'
+    router.replace(targetPath)
+  }
 
 const handleRegister = async () => {
   if (!role) {
@@ -40,16 +48,24 @@ const handleRegister = async () => {
     Alert.alert('خطأ', 'الرجاء إدخال رقم الهاتف');
     return;
   }
+  if (!isValidEgyptianPhone(phone.trim())) {
+    Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح');
+    return;
+  }
   if (!email.trim()) {
     Alert.alert('خطأ', 'الرجاء إدخال البريد الإلكتروني');
+    return;
+  }
+  if (!isValidEmail(email.trim())) {
+    Alert.alert('خطأ', 'البريد الإلكتروني غير صالح');
     return;
   }
   if (!password) {
     Alert.alert('خطأ', 'الرجاء إدخال كلمة المرور');
     return;
   }
-  if (password.length < 6) {
-    Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+  if (!isValidPassword(password)) {
+    Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على أرقام وحروف');
     return;
   }
 
@@ -71,7 +87,8 @@ const handleRegister = async () => {
       });
 
     if (authError) {
-      Alert.alert('خطأ', authError.message);
+      console.error('Auth signup error:', authError);
+      Alert.alert('خطأ', `فشل التسجيل: ${authError.message}`);
       return;
     }
 
@@ -86,33 +103,64 @@ const handleRegister = async () => {
     // 2️⃣ If session exists (email confirmation disabled), upsert profile
     // (handle_new_user trigger may have already created it — upsert is safe either way)
     if (session) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: fullName.trim(),
-          phone: phone.trim(),
-          role,
-          is_banned: false,
-        }, { onConflict: 'id' });
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            full_name: fullName.trim(),
+            phone: phone.trim(),
+            role,
+            is_banned: false,
+            warning_count: 0,
+            ban_reason: null,
+            banned_at: null,
+          }, { onConflict: 'id' });
 
-      if (profileError) {
-        Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${profileError.message}`);
+        if (profileError) {
+          console.error('Profile upsert error:', profileError);
+          
+          // Try insert instead if upsert fails
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              full_name: fullName.trim(),
+              phone: phone.trim(),
+              role,
+              is_banned: false,
+              warning_count: 0,
+              ban_reason: null,
+              banned_at: null,
+            });
+
+          if (insertError) {
+            console.error('Profile insert error:', insertError);
+            Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${insertError.message}`);
+            return;
+          }
+        }
+
+        Alert.alert('نجاح', 'تم إنشاء الحساب بنجاح!', [
+          {
+            text: 'حسناً',
+            onPress: () => router.replace(redirect || '/'),
+          },
+        ]);
+      } catch (error) {
+        console.error('Profile creation error:', error);
+        Alert.alert('خطأ', 'حدث خطأ أثناء إنشاء الملف الشخصي');
         return;
       }
-
-      Alert.alert('نجاح', 'تم إنشاء الحساب بنجاح!', [
-        {
-          text: 'حسناً',
-          onPress: () => router.replace('/'),
-        },
-      ]);
     } else {
       // 3️⃣ No session (email confirmation required) - profile will be created on first login
       Alert.alert('نجاح', 'تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتأكيد التسجيل', [
         {
           text: 'حسناً',
-          onPress: () => router.replace('/auth/login'),
+          onPress: () => router.replace({
+            pathname: '/auth/login',
+            params: redirect ? { redirect } : undefined
+          }),
         },
       ]);
     }
@@ -131,6 +179,11 @@ const handleRegister = async () => {
     >
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}>
         <View style={styles.header}>
+          {redirect && (
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
+            </TouchableOpacity>
+          )}
           <Text style={styles.logo}>صاحبك</Text>
           <Text style={styles.subtitle}>إنشاء حساب جديد</Text>
         </View>
@@ -243,8 +296,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 40,
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    right: 0,
+    padding: 8,
   },
   logo: {
     fontFamily: 'Cairo_700Bold',

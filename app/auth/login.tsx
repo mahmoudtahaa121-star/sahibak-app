@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
+import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import Constants from 'expo-constants'
 import { supabase } from '../../lib/supabase'
@@ -21,6 +21,7 @@ import * as AuthSession from 'expo-auth-session'
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets()
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>()
   const scheme = Constants.expoConfig?.scheme ?? 'sahibak'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,6 +30,12 @@ export default function LoginScreen() {
   useEffect(() => {
     WebBrowser.maybeCompleteAuthSession()
   }, [])
+
+  const handleBack = () => {
+    // Redirect to the intended page or home if not specified
+    const targetPath = redirect || '/'
+    router.replace(targetPath)
+  }
 
   const ensureProfileExists = async (userId: string, email: string, fullName?: string) => {
     const { data: existingProfile } = await supabase
@@ -73,7 +80,7 @@ export default function LoginScreen() {
         Alert.alert('خطأ في تسجيل الدخول', 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
       } else if (data.user) {
         await ensureProfileExists(data.user.id, data.user.email || '', data.user.user_metadata?.full_name)
-        router.replace('/')
+        router.replace(redirect || '/')
       }
     } catch (error) {
       Alert.alert('خطأ', 'حدث خطأ غير متوقع')
@@ -89,6 +96,8 @@ export default function LoginScreen() {
         scheme: typeof scheme === 'string' ? scheme : 'sahibak',
       })
 
+      console.log('Google OAuth redirect URL:', redirectUrl)
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -98,7 +107,8 @@ export default function LoginScreen() {
       })
 
       if (error) {
-        Alert.alert('خطأ', 'فشل تسجيل الدخول عبر جوجل')
+        console.error('Google OAuth error:', error)
+        Alert.alert('خطأ', `فشل تسجيل الدخول عبر جوجل: ${error.message}`)
         setLoading(false)
         return
       }
@@ -114,11 +124,12 @@ export default function LoginScreen() {
               sessionData.session.user.email || '',
               sessionData.session.user.user_metadata?.full_name
             )
-            router.replace('/')
+            router.replace(redirect || '/')
           }
         }
       }
     } catch (error) {
+      console.error('Google login error:', error)
       Alert.alert('خطأ', 'حدث خطأ غير متوقع')
     } finally {
       setLoading(false)
@@ -132,6 +143,11 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}>
         <View style={styles.header}>
+          {redirect && (
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
+            </TouchableOpacity>
+          )}
           <Text style={styles.logo}>صاحبك</Text>
           <Text style={styles.subtitle}>تسجيل الدخول</Text>
         </View>
@@ -161,6 +177,13 @@ export default function LoginScreen() {
               secureTextEntry
             />
           </View>
+
+          <TouchableOpacity
+            style={styles.forgotPasswordButton}
+            onPress={() => router.push('/auth/forgot-password')}
+          >
+            <Text style={styles.forgotPasswordText}>نسيت كلمة المرور؟</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.primaryButton}
@@ -207,8 +230,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 48,
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    right: 0,
+    padding: 8,
   },
   logo: {
     fontFamily: 'Cairo_700Bold',
@@ -284,6 +315,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_600SemiBold',
     fontSize: 14,
     color: '#1A1A1A',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+  },
+  forgotPasswordText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 13,
+    color: '#1B4332',
   },
   registerLink: {
     flexDirection: 'row',

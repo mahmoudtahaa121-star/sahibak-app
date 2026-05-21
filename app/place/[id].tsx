@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -21,6 +22,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { usePlace } from '../../hooks/usePlace'
 import { useToggleFavorite } from '../../hooks/useFavorites'
 import Skeleton from '../../components/ui/Skeleton'
+import PromptModal from '../../components/ui/PromptModal'
 
 export default function PlaceScreen() {
   const insets = useSafeAreaInsets()
@@ -28,6 +30,8 @@ export default function PlaceScreen() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const toggleFavorite = useToggleFavorite()
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   const { data: place, isLoading, error } = usePlace(id)
 
@@ -46,9 +50,44 @@ export default function PlaceScreen() {
     enabled: !!user && !!id,
   })
 
+  // Optimistic update helper
+  const optimisticToggleFavorite = useCallback(async (newFavoriteState: boolean) => {
+    if (!user) return
+
+    // Update cache immediately
+    queryClient.setQueryData(['favorite', id, user?.id], newFavoriteState)
+
+    try {
+      // Perform the actual API call
+      if (newFavoriteState) {
+        const { error } = await supabase
+          .from('favorites')
+          .insert({ user_id: user.id, place_id: id })
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('place_id', id)
+        if (error) throw error
+      }
+
+      // Invalidate to ensure cache is in sync
+      queryClient.invalidateQueries({ queryKey: ['favorite', id, user?.id] })
+    } catch (error) {
+      // Revert on error
+      console.error('Favorite toggle error:', error)
+      queryClient.setQueryData(['favorite', id, user?.id], !newFavoriteState)
+      throw error
+    }
+  }, [user, id, queryClient])
+
   const handleWhatsApp = useCallback(() => {
     if (place?.whatsapp) {
-      Linking.openURL(`https://wa.me/2${place.whatsapp}`)
+      // Remove leading 0 if present and add Egyptian country code
+      const cleanedNumber = place.whatsapp.replace(/^0/, '')
+      Linking.openURL(`https://wa.me/20${cleanedNumber}`)
     }
   }, [place?.whatsapp])
 
@@ -61,61 +100,119 @@ export default function PlaceScreen() {
   const handleShare = useCallback(async () => {
     if (place) {
       try {
-        await Sharing.shareAsync(`${place.name_ar}\n${place.phone}\nعبر صاحبك`)
+        const isAvailable = await Sharing.isAvailableAsync()
+        if (Platform.OS !== 'web' && isAvailable) {
+          await Sharing.shareAsync(`${place.name_ar}\n${place.phone}\nعبر صاحبك`)
+        } else {
+          Alert.alert('غير متاح', 'مشاركة الروابط غير متاحة على هذا المنصة')
+        }
       } catch (error) {
-        // Share failed - user cancelled or error occurred
+        console.error('Share error:', error)
+        // Share failed - user cancelled or error occurred (silent is OK here)
       }
     }
   }, [place]) 
 
   const handleToggleFavorite = useCallback(async () => {
     if (!user) {
-      router.push('/auth/login')
+      router.replace('/auth/login')
       return
-    } 
-
-    if (isFavorite) {
-      await supabase
-        .from('favorites')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('place_id', id)
-    } else {
-      await supabase
-        .from('favorites')
-        .insert({ user_id: user.id, place_id: id })
     }
 
-    queryClient.invalidateQueries({ queryKey: ['favorite', id, user?.id] })
-  }, [user, isFavorite, id, queryClient])
+    setFavoriteLoading(true)
+
+    // If removing from favorites, show confirmation
+    if (isFavorite) {
+      Alert.alert(
+        'تأكيد الحذف',
+        'هل أنت متأكد من حذف هذا المكان من المفضلة؟',
+        [
+          {
+            text: 'إلغاء',
+            style: 'cancel',
+            onPress: () => setFavoriteLoading(false),
+          },
+          {
+            text: 'حذف',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await optimisticToggleFavorite(false)
+                Alert.alert('تم', 'تم حذف المكان من المفضلة')
+              } catch (error) {
+                console.error('Favorite removal error:', error)
+                Alert.alert('خطأ', 'حدث خطأ أثناء حذف المفضلة. يرجى المحاولة مرة أخرى')
+              } finally {
+                setFavoriteLoading(false)
+              }
+            },
+          },
+        ]
+      )
+      return
+    }
+
+    // Adding to favorites - no confirmation needed
+    try {
+      await optimisticToggleFavorite(true)
+      Alert.alert('تم', 'تمت إضافة المكان إلى المفضلة')
+    } catch (error) {
+      console.error('Favorite addition error:', error)
+      Alert.alert('خطأ', 'حدث خطأ أثناء إضافة المفضلة. يرجى المحاولة مرة أخرى')
+    } finally {
+      setFavoriteLoading(false)
+    }
+  }, [user, isFavorite, optimisticToggleFavorite])
 
   const handleReport = useCallback(() => {
     if (!user) {
-      router.push('/auth/login')
+      router.replace('/auth/login')
       return
     }
 
-    Alert.prompt(
-      'بلّغ عن خطأ',
-      'اكتب سبب الإبلاغ',
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        {
-          text: 'إرسال',
-          onPress: async (text?: string) => {
-            if (text && place) {
-              await supabase.from('reports').insert({
-                place_id: place.id,
-                reason: text,
-              })
-              Alert.alert('شكراً', 'تم إرسال بلاغك بنجاح')
-            }
+    setShowReportModal(true)
+  }, [user])
+
+  const handleReportSubmit = useCallback(async (text: string) => {
+    if (!text || text.trim().length === 0) {
+      Alert.alert('خطأ', 'الرجاء كتابة سبب الإبلاغ')
+      return
+    }
+
+    if (text && place) {
+      Alert.alert(
+        'تأكيد الإرسال',
+        'هل أنت متأكد من إرسال هذا البلاغ؟',
+        [
+          {
+            text: 'إلغاء',
+            style: 'cancel',
           },
-        },
-      ],
-      'plain-text'
-    )
-  }, [place])
+          {
+            text: 'إرسال',
+            onPress: async () => {
+              if (!user) return
+
+              try {
+                const { error } = await supabase.from('reports').insert({
+                  place_id: place.id,
+                  user_id: user.id,
+                  reason: text.trim(),
+                })
+
+                if (error) throw error
+
+                Alert.alert('شكراً', 'تم إرسال بلاغك بنجاح')
+              } catch (error) {
+                console.error('Report submission error:', error)
+                Alert.alert('خطأ', 'حدث خطأ أثناء إرسال البلاغ. يرجى المحاولة مرة أخرى')
+              }
+            },
+          },
+        ]
+      )
+    }
+  }, [place, user])
 
   if (isLoading) {
     return (
@@ -156,12 +253,16 @@ export default function PlaceScreen() {
             <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{place.name_ar}</Text>
-          <TouchableOpacity onPress={handleToggleFavorite}>
-            <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
-              size={24}
-              color={isFavorite ? '#EF4444' : '#1A1A1A'}
-            />
+          <TouchableOpacity onPress={handleToggleFavorite} disabled={favoriteLoading}>
+            {favoriteLoading ? (
+              <ActivityIndicator size={24} color="#1B4332" />
+            ) : (
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={24}
+                color={isFavorite ? '#EF4444' : '#1A1A1A'}
+              />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -270,6 +371,15 @@ export default function PlaceScreen() {
           <Text style={styles.reportButtonText}>🚩 بلّغ عن خطأ في المعلومات</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <PromptModal
+        visible={showReportModal}
+        title="بلّغ عن خطأ"
+        message="اكتب سبب الإبلاغ"
+        placeholder="سبب الإبلاغ"
+        onSubmit={handleReportSubmit}
+        onCancel={() => setShowReportModal(false)}
+      />
     </View>
   )
 }

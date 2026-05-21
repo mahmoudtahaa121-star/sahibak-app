@@ -22,7 +22,10 @@ export function usePlaces(area: string) {
         .eq('area', area)
         .order('created_at', { ascending: false })
         .limit(20)
-      if (error) throw error
+      if (error) {
+        console.error('usePlaces error:', error)
+        throw error
+      }
       return (data ?? []).map((p: any) => ({
         ...p,
         categories: p.categories?.map((c: any) => c.category) ?? [],

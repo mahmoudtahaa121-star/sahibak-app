@@ -26,7 +26,12 @@ function AuthGate() {
     if (user && inAuthGroup) {
       router.replace('/')
     } else if (!user && inProtectedGroup) {
-      router.replace('/auth/login')
+      // Pass the intended redirect URL as a query parameter
+      const intendedPath = '/' + segments.join('/')
+      router.replace({
+        pathname: '/auth/login',
+        params: { redirect: intendedPath }
+      })
     }
   }, [user, loading, segments])
 

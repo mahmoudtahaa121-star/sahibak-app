@@ -4,6 +4,11 @@ export interface Profile {
   phone: string | null
   role: 'user' | 'provider' | 'admin'
   is_banned: boolean
+  warning_count: number
+  ban_reason: string | null
+  banned_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Category {
@@ -17,6 +22,7 @@ export interface Category {
   is_active: boolean
   show_on_home: boolean
   place_type_hint: 'shop' | 'person' | 'both'
+  children?: Category[]
 }
 
 export interface PlaceService {
@@ -25,6 +31,7 @@ export interface PlaceService {
   name_ar: string
   description_ar: string | null
   sort_order: number
+  created_at: string
 }
 
 export interface Place {
@@ -45,8 +52,11 @@ export interface Place {
   admin_note: string | null
   deleted_at: string | null
   created_at: string
+  updated_at: string
   categories?: Category[]
   services?: PlaceService[]
+  images?: PlaceImage[]
+  likes_count?: number
 }
 
 export interface News {
@@ -66,6 +76,10 @@ export interface Offer {
   description_ar: string | null
   expires_at: string | null
   status: 'pending' | 'approved' | 'rejected'
+  admin_note: string | null
+  deleted_at: string | null
+  created_at: string
+  updated_at: string
   place?: Pick<Place, 'id' | 'name_ar' | 'image_url' | 'place_type'>
 }
 
@@ -74,3 +88,63 @@ export interface AppConfig {
   value: string
 }
 
+export interface PlaceImage {
+  id: string
+  place_id: string
+  url: string
+  is_cover: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface Like {
+  user_id: string
+  place_id: string
+  created_at: string
+}
+
+export interface Favorite {
+  user_id: string
+  place_id: string
+  created_at: string
+}
+
+export interface DeviceToken {
+  id: string
+  user_id: string
+  token: string
+  platform: 'android' | 'ios' | 'web' | null
+  created_at: string
+}
+
+export interface PlaceEditRequest {
+  id: string
+  place_id: string
+  provider_id: string
+  field_name: string
+  old_value: string | null
+  new_value: string
+  status: 'pending' | 'approved' | 'rejected'
+  admin_note: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Report {
+  id: string
+  place_id: string
+  user_id: string | null
+  reason: string
+  status: 'pending' | 'reviewed' | 'resolved'
+  created_at: string
+}
+
+export interface AuditLog {
+  id: string
+  admin_id: string | null
+  action: string
+  target_type: string
+  target_id: string
+  note: string | null
+  created_at: string
+}

@@ -11,7 +11,10 @@ export function useNews() {
         .select('*')
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
-      if (error) throw error
+      if (error) {
+        console.error('useNews error:', error)
+        throw error
+      }
       return data ?? []
     },
   })

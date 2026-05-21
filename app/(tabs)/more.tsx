@@ -62,7 +62,7 @@ export default function MoreScreen() {
             </View>
             <Text style={styles.welcome}>مرحباً بك</Text>
             <Text style={styles.subtitle}>سجّل دخولك للوصول لكل المميزات</Text>
-            <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/auth/login')}>
+            <TouchableOpacity style={styles.loginButton} onPress={() => router.replace({ pathname: '/auth/login', params: { redirect: '/(tabs)/more' } })}>
               <Text style={styles.loginButtonText}>تسجيل الدخول / إنشاء حساب</Text>
             </TouchableOpacity>
           </View>

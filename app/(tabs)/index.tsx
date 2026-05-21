@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { debounce } from '../../utils/debounce'
 import {
   View,
   Text,
@@ -29,12 +30,13 @@ import { Category, Place, News } from '../../types'
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
   const { selectedArea, availableAreas, setSelectedArea } = useArea()
-  const { data: news, isLoading: newsLoading, refetch: refetchNews } = useNews()
-  const { data: categories, isLoading: categoriesLoading, refetch: refetchCategories } = useParentCategories()
+  const { data: news, isLoading: newsLoading, error: newsError, refetch: refetchNews } = useNews()
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useParentCategories()
   const { data: places, isLoading: placesLoading, error: placesError, refetch: refetchPlaces } = usePlaces(selectedArea)
   const { data: offers, refetch: refetchOffers } = useOffers(selectedArea)
   const [isConnected, setIsConnected] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [showAreaModal, setShowAreaModal] = useState(false)
   const [showNewsModal, setShowNewsModal] = useState(false)
@@ -49,6 +51,19 @@ export default function HomeScreen() {
     })
     return () => unsubscribe()
   }, [])
+
+  // Debounced search handler
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      setSearchQuery(value)
+    }, 300),
+    []
+  )
+
+  // Update debounced search when input changes
+  useEffect(() => {
+    debouncedSearch(searchInput)
+  }, [searchInput, debouncedSearch])
 
   const filteredPlaces = useMemo(() => {
     return places?.filter((place: Place) => {
@@ -95,7 +110,8 @@ export default function HomeScreen() {
         refetchOffers(),
       ])
     } catch (error) {
-      // Error during refresh - silently ignore
+      console.error('Refresh error:', error)
+      Alert.alert('خطأ', 'حدث خطأ أثناء التحديث. يرجى المحاولة مرة أخرى')
     } finally {
       setRefreshing(false)
     }
@@ -108,6 +124,14 @@ export default function HomeScreen() {
       {!isConnected && (
         <View style={styles.offlineBanner}>
           <Text style={styles.offlineText}>📵 أنت غير متصل — عرض بيانات محفوظة</Text>
+        </View>
+      )}
+
+      {(placesError || categoriesError || newsError) && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.rlsErrorText}>
+            ⚠️ خطأ في تحميل البيانات - قد تحتاج إلى تحديث سياسات RLS
+          </Text>
         </View>
       )}
 
@@ -145,8 +169,8 @@ export default function HomeScreen() {
             style={styles.searchInput}
             placeholder="ابحث في المنصورية..."
             placeholderTextColor="#ADB5BD"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={searchInput}
+            onChangeText={setSearchInput}
           />
         </View>
 
@@ -155,13 +179,19 @@ export default function HomeScreen() {
             {filteredPlaces.length === 0 ? (
               <Text style={styles.noResults}>لا توجد نتائج</Text>
             ) : (
-              filteredPlaces.map((place) => (
-                <PlaceCard
-                  key={place.id}
-                  place={place}
-                  onPress={() => handlePlacePress(place.id)}
-                />
-              ))
+              <FlatList
+                data={filteredPlaces}
+                keyExtractor={(item) => item.id}
+                removeClippedSubviews={true}
+                initialNumToRender={10}
+                renderItem={({ item }) => (
+                  <PlaceCard
+                    key={item.id}
+                    place={item}
+                    onPress={() => handlePlacePress(item.id)}
+                  />
+                )}
+              />
             )}
           </View>
         ) : (
@@ -403,6 +433,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_400Regular',
     fontSize: 12,
     color: '#856404',
+    textAlign: 'center',
+  },
+  errorBanner: {
+    backgroundColor: '#F8D7DA',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  rlsErrorText: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 12,
+    color: '#721C24',
     textAlign: 'center',
   },
   header: {

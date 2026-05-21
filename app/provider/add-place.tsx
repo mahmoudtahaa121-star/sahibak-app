@@ -20,6 +20,7 @@ import { useAddPlace } from '../../hooks/useAddPlace'
 import { useProviderPlaces } from '../../hooks/useProviderPlaces'
 import { supabase } from '../../lib/supabase'
 import { Category } from '../../types'
+import { isValidEgyptianPhone } from '../../utils/validation'
 
 type Step = 1 | 2 | 3 | 4
 type PlaceType = 'shop' | 'person'
@@ -73,7 +74,7 @@ export default function AddPlaceScreen() {
       .order('sort_order')
 
     if (data && !error) {
-      setSelectedParent({ ...selectedParent!, children: data } as any)
+      setSelectedParent({ ...selectedParent!, children: data })
     }
   }
 
@@ -129,6 +130,14 @@ export default function AddPlaceScreen() {
     }
     if (!phone.trim()) {
       Alert.alert('خطأ', 'الرجاء إدخال رقم التليفون')
+      return false
+    }
+    if (!isValidEgyptianPhone(phone.trim())) {
+      Alert.alert('خطأ', 'رقم الهاتف غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
+      return false
+    }
+    if (whatsapp.trim() && !isValidEgyptianPhone(whatsapp.trim())) {
+      Alert.alert('خطأ', 'رقم الواتساب غير صالح. يجب أن يكون رقم هاتف مصري صحيح')
       return false
     }
     if (placeType === 'shop' && !addressText.trim()) {
@@ -195,22 +204,22 @@ export default function AddPlaceScreen() {
         style={[
           styles.typeCard,
           placeType === 'shop' && styles.typeCardSelected,
-          shopCount >= 1 && styles.typeCardDisabled,
+          shopCount >= 3 && styles.typeCardDisabled,
         ]}
-        onPress={() => shopCount < 1 && setPlaceType('shop')}
-        disabled={shopCount >= 1}
+        onPress={() => shopCount < 3 && setPlaceType('shop')}
+        disabled={shopCount >= 3}
       >
         <Text style={styles.typeEmoji}>🏪</Text>
         <View style={styles.typeInfo}>
           <Text style={styles.typeName}>محل أو مكان</Text>
-          {shopCount >= 1 && (
-            <Text style={styles.limitMessage}>لديك محل مسجل بالفعل</Text>
+          {shopCount >= 3 && (
+            <Text style={styles.limitMessage}>لديك الحد الأقصى من المحلات (3)</Text>
           )}
         </View>
         {placeType === 'shop' && (
           <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
         )}
-        {shopCount >= 1 && (
+        {shopCount >= 3 && (
           <Ionicons name="lock-closed" size={24} color="#ADB5BD" />
         )}
       </TouchableOpacity>
@@ -219,22 +228,22 @@ export default function AddPlaceScreen() {
         style={[
           styles.typeCard,
           placeType === 'person' && styles.typeCardSelected,
-          personCount >= 1 && styles.typeCardDisabled,
+          personCount >= 5 && styles.typeCardDisabled,
         ]}
-        onPress={() => personCount < 1 && setPlaceType('person')}
-        disabled={personCount >= 1}
+        onPress={() => personCount < 5 && setPlaceType('person')}
+        disabled={personCount >= 5}
       >
         <Text style={styles.typeEmoji}>👤</Text>
         <View style={styles.typeInfo}>
           <Text style={styles.typeName}>شخص / مهنة</Text>
-          {personCount >= 1 && (
-            <Text style={styles.limitMessage}>لديك ملف شخصي مسجل بالفعل</Text>
+          {personCount >= 5 && (
+            <Text style={styles.limitMessage}>لديك الحد الأقصى من الملفات الشخصية (5)</Text>
           )}
         </View>
         {placeType === 'person' && (
           <Ionicons name="checkmark-circle" size={24} color="#1B4332" />
         )}
-        {personCount >= 1 && (
+        {personCount >= 5 && (
           <Ionicons name="lock-closed" size={24} color="#ADB5BD" />
         )}
       </TouchableOpacity>
@@ -282,7 +291,7 @@ export default function AddPlaceScreen() {
           <Text style={styles.parentCategoryName}>{selectedParent.name_ar}</Text>
 
           <View style={styles.categoriesGrid}>
-            {(selectedParent as any).children?.map((child: Category) => (
+            {selectedParent.children?.map((child: Category) => (
               <TouchableOpacity
                 key={child.id}
                 style={[

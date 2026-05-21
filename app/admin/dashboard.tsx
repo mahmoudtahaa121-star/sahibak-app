@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { Place, Offer, Profile } from '../../types'
 import Skeleton from '../../components/ui/Skeleton'
+import PromptModal from '../../components/ui/PromptModal'
 
 interface PendingPlace extends Omit<Place, 'categories' | 'services'> {
   place_categories?: { category: { id: number; name_ar: string; icon: string | null } }[]
@@ -44,6 +45,12 @@ export default function AdminDashboardScreen() {
   const [editRequests, setEditRequests] = useState<any[]>([])
   const [reports, setReports] = useState<any[]>([])
   const [providers, setProviders] = useState<Profile[]>([])
+  const [showRejectPlaceModal, setShowRejectPlaceModal] = useState(false)
+  const [showRejectOfferModal, setShowRejectOfferModal] = useState(false)
+  const [showRejectEditModal, setShowRejectEditModal] = useState(false)
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null)
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
+  const [selectedEditRequestId, setSelectedEditRequestId] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -154,52 +161,77 @@ export default function AdminDashboardScreen() {
   }, [])
 
   const approvePlace = useCallback(async (placeId: string) => {
-    setRefreshing(true)
-    try {
-      const { error } = await supabase
-        .from('places')
-        .update({ status: 'approved' })
-        .eq('id', placeId)
+    Alert.alert(
+      'تأكيد الموافقة',
+      'هل أنت متأكد من الموافقة على هذا المكان؟',
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
+        {
+          text: 'موافقة',
+          onPress: async () => {
+            setRefreshing(true)
+            try {
+              const { error } = await supabase
+                .from('places')
+                .update({ status: 'approved' })
+                .eq('id', placeId)
 
-      if (error) throw error
+              if (error) throw error
 
-      await supabase.from('audit_log').insert({
-        admin_id: user?.id,
-        action: 'approved_place',
-        target_type: 'place',
-        target_id: placeId,
-      })
+              await supabase.from('audit_log').insert({
+                admin_id: user?.id,
+                action: 'approved_place',
+                target_type: 'place',
+                target_id: placeId,
+              })
 
-      await fetchPendingPlaces()
-      await fetchStats()
-      Alert.alert('تم', 'تمت الموافقة على المكان')
-    } catch (error) {
-      Alert.alert('خطأ', 'فشل الموافقة')
-    } finally {
-      setRefreshing(false)
-    }
+              await fetchPendingPlaces()
+              await fetchStats()
+              Alert.alert('تم', 'تمت الموافقة على المكان')
+            } catch (error) {
+              console.error('Approve place error:', error)
+              Alert.alert('خطأ', 'فشل الموافقة')
+            } finally {
+              setRefreshing(false)
+            }
+          },
+        },
+      ]
+    )
   }, [user, fetchPendingPlaces, fetchStats])
 
   const rejectPlace = useCallback(async (placeId: string) => {
-    Alert.prompt(
-      'سبب الرفض',
-      'أدخل سبب رفض المكان',
+    setSelectedPlaceId(placeId)
+    setShowRejectPlaceModal(true)
+  }, [])
+
+  const handleRejectPlaceSubmit = useCallback(async (reason: string) => {
+    if (!reason || !selectedPlaceId) {
+      Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
+      return
+    }
+
+    Alert.alert(
+      'تأكيد الرفض',
+      `هل أنت متأكد من رفض هذا المكان؟ السبب: ${reason}`,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
         {
           text: 'رفض',
-          onPress: async (reason?: string) => {
-            if (!reason) {
-              Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
-              return
-            }
-
+          style: 'destructive',
+          onPress: async () => {
             setRefreshing(true)
             try {
               const { error } = await supabase
                 .from('places')
                 .update({ status: 'rejected', admin_note: reason })
-                .eq('id', placeId)
+                .eq('id', selectedPlaceId)
 
               if (error) throw error
 
@@ -207,70 +239,96 @@ export default function AdminDashboardScreen() {
                 admin_id: user?.id,
                 action: 'rejected_place',
                 target_type: 'place',
-                target_id: placeId,
+                target_id: selectedPlaceId,
               })
 
               await fetchPendingPlaces()
               await fetchStats()
               Alert.alert('تم', 'تم رفض المكان')
             } catch (error) {
+              console.error('Reject place error:', error)
               Alert.alert('خطأ', 'فشل الرفض')
+            } finally {
+              setRefreshing(false)
+              setSelectedPlaceId(null)
+            }
+          },
+        },
+      ]
+    )
+  }, [user, selectedPlaceId, fetchPendingPlaces, fetchStats])
+
+  const approveOffer = useCallback(async (offerId: string) => {
+    Alert.alert(
+      'تأكيد الموافقة',
+      'هل أنت متأكد من الموافقة على هذا العرض؟',
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
+        {
+          text: 'موافقة',
+          onPress: async () => {
+            setRefreshing(true)
+            try {
+              const { error } = await supabase
+                .from('offers')
+                .update({ status: 'approved' })
+                .eq('id', offerId)
+
+              if (error) throw error
+
+              await supabase.from('audit_log').insert({
+                admin_id: user?.id,
+                action: 'approved_offer',
+                target_type: 'offer',
+                target_id: offerId,
+              })
+
+              await fetchPendingOffers()
+              Alert.alert('تم', 'تمت الموافقة على العرض')
+            } catch (error) {
+              console.error('Approve offer error:', error)
+              Alert.alert('خطأ', 'فشل الموافقة')
             } finally {
               setRefreshing(false)
             }
           },
         },
-      ],
-      'plain-text'
+      ]
     )
-  }, [user, fetchPendingPlaces, fetchStats])
-
-  const approveOffer = useCallback(async (offerId: string) => {
-    setRefreshing(true)
-    try {
-      const { error } = await supabase
-        .from('offers')
-        .update({ status: 'approved' })
-        .eq('id', offerId)
-
-      if (error) throw error
-
-      await supabase.from('audit_log').insert({
-        admin_id: user?.id,
-        action: 'approved_offer',
-        target_type: 'offer',
-        target_id: offerId,
-      })
-
-      await fetchPendingOffers()
-      Alert.alert('تم', 'تمت الموافقة على العرض')
-    } catch (error) {
-      Alert.alert('خطأ', 'فشل الموافقة')
-    } finally {
-      setRefreshing(false)
-    }
   }, [user, fetchPendingOffers])
 
   const rejectOffer = useCallback(async (offerId: string) => {
-    Alert.prompt(
-      'سبب الرفض',
-      'أدخل سبب رفض العرض',
+    setSelectedOfferId(offerId)
+    setShowRejectOfferModal(true)
+  }, [])
+
+  const handleRejectOfferSubmit = useCallback(async (reason: string) => {
+    if (!reason || !selectedOfferId) {
+      Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
+      return
+    }
+
+    Alert.alert(
+      'تأكيد الرفض',
+      `هل أنت متأكد من رفض هذا العرض؟ السبب: ${reason}`,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
         {
           text: 'رفض',
-          onPress: async (reason?: string) => {
-            if (!reason) {
-              Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
-              return
-            }
-
+          style: 'destructive',
+          onPress: async () => {
             setRefreshing(true)
             try {
               const { error } = await supabase
                 .from('offers')
                 .update({ status: 'rejected' })
-                .eq('id', offerId)
+                .eq('id', selectedOfferId)
 
               if (error) throw error
 
@@ -278,147 +336,212 @@ export default function AdminDashboardScreen() {
                 admin_id: user?.id,
                 action: 'rejected_offer',
                 target_type: 'offer',
-                target_id: offerId,
+                target_id: selectedOfferId,
               })
 
               await fetchPendingOffers()
               Alert.alert('تم', 'تم رفض العرض')
             } catch (error) {
+              console.error('Reject offer error:', error)
               Alert.alert('خطأ', 'فشل الرفض')
+            } finally {
+              setRefreshing(false)
+              setSelectedOfferId(null)
+            }
+          },
+        },
+      ]
+    )
+  }, [user, selectedOfferId, fetchPendingOffers])
+
+  const markReportReviewed = useCallback(async (reportId: string) => {
+    Alert.alert(
+      'تأكيد المراجعة',
+      'هل أنت متأكد من مراجعة هذا البلاغ؟',
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
+        {
+          text: 'مراجعة',
+          onPress: async () => {
+            setRefreshing(true)
+            try {
+              const { error } = await supabase
+                .from('reports')
+                .update({ status: 'reviewed' })
+                .eq('id', reportId)
+
+              if (error) throw error
+
+              await fetchReports()
+              Alert.alert('تم', 'تم مراجعة البلاغ')
+            } catch (error) {
+              console.error('Mark report reviewed error:', error)
+              Alert.alert('خطأ', 'فشل المراجعة')
             } finally {
               setRefreshing(false)
             }
           },
         },
-      ],
-      'plain-text'
+      ]
     )
-  }, [user, fetchPendingOffers])
-
-  const markReportReviewed = useCallback(async (reportId: string) => {
-    setRefreshing(true)
-    try {
-      const { error } = await supabase
-        .from('reports')
-        .update({ status: 'reviewed' })
-        .eq('id', reportId)
-
-      if (error) throw error
-
-      await fetchReports()
-      Alert.alert('تم', 'تم مراجعة البلاغ')
-    } catch (error) {
-      Alert.alert('خطأ', 'فشل المراجعة')
-    } finally {
-      setRefreshing(false)
-    }
   }, [fetchReports])
 
   const toggleBan = useCallback(async (providerId: string, currentStatus: boolean) => {
-    setRefreshing(true)
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_banned: !currentStatus })
-        .eq('id', providerId)
+    const action = currentStatus ? 'إلغاء الحظر' : 'حظر'
+    const message = currentStatus 
+      ? 'هل أنت متأكد من إلغاء حظر هذا المزود؟'
+      : 'هل أنت متأكد من حظر هذا المزود؟ لن يتمكن من إضافة أو تعديل الأماكن.'
 
-      if (error) throw error
+    Alert.alert(
+      `تأكيد ${action}`,
+      message,
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
+        {
+          text: action,
+          style: currentStatus ? 'default' : 'destructive',
+          onPress: async () => {
+            setRefreshing(true)
+            try {
+              const { error } = await supabase
+                .from('profiles')
+                .update({ is_banned: !currentStatus })
+                .eq('id', providerId)
 
-      await fetchProviders()
-      Alert.alert('تم', currentStatus ? 'تم إلغاء الحظر' : 'تم حظر المزود')
-    } catch (error) {
-      Alert.alert('خطأ', 'فشل التحديث')
-    } finally {
-      setRefreshing(false)
-    }
+              if (error) throw error
+
+              await fetchProviders()
+              Alert.alert('تم', currentStatus ? 'تم إلغاء الحظر' : 'تم حظر المزود')
+            } catch (error) {
+              console.error('Ban toggle error:', error)
+              Alert.alert('خطأ', 'فشل التحديث')
+            } finally {
+              setRefreshing(false)
+            }
+          },
+        },
+      ]
+    )
   }, [fetchProviders])
 
   const approveEditRequest = useCallback(async (requestId: string, placeId: string, fieldName: string, newValue: string) => {
-    setRefreshing(true)
-    try {
-      // Update the place field
-      if (fieldName === 'category_ids') {
-        // Handle category_ids separately
-        const newCategoryIds = JSON.parse(newValue)
-        await supabase.from('place_categories').delete().eq('place_id', placeId)
-        for (const categoryId of newCategoryIds) {
-          await supabase.from('place_categories').insert({
-            place_id: placeId,
-            category_id: categoryId,
-          })
-        }
-      } else {
-        // Update simple field
-        await supabase
-          .from('places')
-          .update({ [fieldName]: newValue })
-          .eq('id', placeId)
-      }
-
-      // Update request status
-      await supabase
-        .from('place_edit_requests')
-        .update({ status: 'approved' })
-        .eq('id', requestId)
-
-      // Insert audit log
-      await supabase.from('audit_log').insert({
-        admin_id: user?.id,
-        action: 'approved_edit_request',
-        target_type: 'place_edit_request',
-        target_id: requestId,
-      })
-
-      await fetchEditRequests()
-      Alert.alert('تم', 'تمت الموافقة على التعديل')
-    } catch (error) {
-      Alert.alert('خطأ', 'فشل الموافقة')
-    } finally {
-      setRefreshing(false)
-    }
-  }, [user, fetchEditRequests])
-
-  const rejectEditRequest = useCallback(async (requestId: string) => {
-    Alert.prompt(
-      'سبب الرفض',
-      'أدخل سبب رفض التعديل',
+    Alert.alert(
+      'تأكيد الموافقة',
+      'هل أنت متأكد من الموافقة على هذا التعديل؟',
       [
-        { text: 'إلغاء', style: 'cancel' },
         {
-          text: 'رفض',
-          onPress: async (reason?: string) => {
-            if (!reason) {
-              Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
-              return
-            }
-
+          text: 'إلغاء',
+          style: 'cancel',
+        },
+        {
+          text: 'موافقة',
+          onPress: async () => {
             setRefreshing(true)
             try {
+              // Update the place field
+              if (fieldName === 'category_ids') {
+                // Handle category_ids separately
+                const newCategoryIds = JSON.parse(newValue)
+                await supabase.from('place_categories').delete().eq('place_id', placeId)
+                for (const categoryId of newCategoryIds) {
+                  await supabase.from('place_categories').insert({
+                    place_id: placeId,
+                    category_id: categoryId,
+                  })
+                }
+              } else {
+                // Update simple field
+                await supabase
+                  .from('places')
+                  .update({ [fieldName]: newValue })
+                  .eq('id', placeId)
+              }
+
+              // Update request status
               await supabase
                 .from('place_edit_requests')
-                .update({ status: 'rejected' })
+                .update({ status: 'approved' })
                 .eq('id', requestId)
 
+              // Insert audit log
               await supabase.from('audit_log').insert({
                 admin_id: user?.id,
-                action: 'rejected_edit_request',
+                action: 'approved_edit_request',
                 target_type: 'place_edit_request',
                 target_id: requestId,
               })
 
               await fetchEditRequests()
-              Alert.alert('تم', 'تم رفض التعديل')
+              Alert.alert('تم', 'تمت الموافقة على التعديل')
             } catch (error) {
-              Alert.alert('خطأ', 'فشل الرفض')
+              console.error('Approve edit request error:', error)
+              Alert.alert('خطأ', 'فشل الموافقة')
             } finally {
               setRefreshing(false)
             }
           },
         },
-      ],
-      'plain-text'
+      ]
     )
   }, [user, fetchEditRequests])
+
+  const rejectEditRequest = useCallback(async (requestId: string) => {
+    setSelectedEditRequestId(requestId)
+    setShowRejectEditModal(true)
+  }, [])
+
+  const handleRejectEditSubmit = useCallback(async (reason: string) => {
+    if (!reason || !selectedEditRequestId) {
+      Alert.alert('خطأ', 'الرجاء إدخال سبب الرفض')
+      return
+    }
+
+    Alert.alert(
+      'تأكيد الرفض',
+      `هل أنت متأكد من رفض هذا التعديل؟ السبب: ${reason}`,
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
+        {
+          text: 'رفض',
+          style: 'destructive',
+          onPress: async () => {
+            setRefreshing(true)
+            try {
+              await supabase
+                .from('place_edit_requests')
+                .update({ status: 'rejected' })
+                .eq('id', selectedEditRequestId)
+
+              await supabase.from('audit_log').insert({
+                admin_id: user?.id,
+                action: 'rejected_edit_request',
+                target_type: 'place_edit_request',
+                target_id: selectedEditRequestId,
+              })
+
+              await fetchEditRequests()
+              Alert.alert('تم', 'تم رفض التعديل')
+            } catch (error) {
+              console.error('Reject edit request error:', error)
+              Alert.alert('خطأ', 'فشل الرفض')
+            } finally {
+              setRefreshing(false)
+              setSelectedEditRequestId(null)
+            }
+          },
+        },
+      ]
+    )
+  }, [user, selectedEditRequestId, fetchEditRequests])
 
   const getFieldLabel = useCallback((fieldName: string) => {
     const labels: Record<string, string> = {
@@ -778,6 +901,33 @@ export default function AdminDashboardScreen() {
       </View>
 
       <View style={styles.footer} />
+
+      <PromptModal
+        visible={showRejectPlaceModal}
+        title="سبب الرفض"
+        message="أدخل سبب رفض المكان"
+        placeholder="سبب الرفض"
+        onSubmit={handleRejectPlaceSubmit}
+        onCancel={() => setShowRejectPlaceModal(false)}
+      />
+
+      <PromptModal
+        visible={showRejectOfferModal}
+        title="سبب الرفض"
+        message="أدخل سبب رفض العرض"
+        placeholder="سبب الرفض"
+        onSubmit={handleRejectOfferSubmit}
+        onCancel={() => setShowRejectOfferModal(false)}
+      />
+
+      <PromptModal
+        visible={showRejectEditModal}
+        title="سبب الرفض"
+        message="أدخل سبب رفض التعديل"
+        placeholder="سبب الرفض"
+        onSubmit={handleRejectEditSubmit}
+        onCancel={() => setShowRejectEditModal(false)}
+      />
     </ScrollView>
   )
 }

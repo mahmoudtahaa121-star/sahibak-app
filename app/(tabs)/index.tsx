@@ -11,6 +11,7 @@ import {
   FlatList,
   Modal,
   Alert,
+  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,9 +39,12 @@ export default function HomeScreen() {
     refetch: refetchCategories,
   } = useParentCategories();
   const {
-    data: places,
+    data: placesData,
     isLoading: placesLoading,
     error: placesError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     refetch: refetchPlaces,
   } = usePlaces(selectedArea);
   const { data: offers, refetch: refetchOffers } = useOffers(selectedArea);
@@ -76,9 +80,15 @@ export default function HomeScreen() {
     debouncedSearch(searchInput);
   }, [searchInput, debouncedSearch]);
 
+  // Flatten infinite query pages
+  const allPlaces = useMemo(
+    () => placesData?.pages.flatMap((page) => page) || [],
+    [placesData],
+  );
+
   const filteredPlaces = useMemo(() => {
     return (
-      places?.filter((place: Place) => {
+      allPlaces?.filter((place: Place) => {
         if (searchQuery.length <= 1) return true;
         const query = searchQuery.toLowerCase();
         return (
@@ -89,7 +99,7 @@ export default function HomeScreen() {
         );
       }) || []
     );
-  }, [places, searchQuery]);
+  }, [allPlaces, searchQuery]);
 
   const handleCategoryPress = useCallback((category: Category) => {
     setSelectedCategory(category);
@@ -279,22 +289,38 @@ export default function HomeScreen() {
                     <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
                   </TouchableOpacity>
                 </View>
-              ) : !places || places.length === 0 ? (
+              ) : !allPlaces || allPlaces.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyEmoji}>🏘</Text>
                   <Text style={styles.emptyTitle}>لا توجد خدمات بعد</Text>
                   <Text style={styles.emptySubtitle}>كن أول من يضيف خدمة في {selectedArea}</Text>
                 </View>
               ) : (
-                <View style={styles.placesList}>
-                  {places.map((place) => (
+                <FlatList
+                  data={filteredPlaces}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
                     <PlaceCard
-                      key={place.id}
-                      place={place}
-                      onPress={() => handlePlacePress(place.id)}
+                      place={item}
+                      onPress={() => handlePlacePress(item.id)}
                     />
-                  ))}
-                </View>
+                  )}
+                  contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 16 }}
+                  removeClippedSubviews={true}
+                  initialNumToRender={10}
+                  onEndReached={() => {
+                    if (hasNextPage && !isFetchingNextPage) {
+                      fetchNextPage();
+                    }
+                  }}
+                  ListFooterComponent={() =>
+                    isFetchingNextPage ? (
+                      <View style={styles.paginationLoading}>
+                        <ActivityIndicator size="small" color="#1B4332" />
+                      </View>
+                    ) : null
+                  }
+                />
               )}
             </View>
           </>
@@ -689,6 +715,11 @@ const styles = StyleSheet.create({
   placesList: {
     gap: 12,
     paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  paginationLoading: {
+    alignItems: 'center',
+    paddingVertical: 16,
   },
   modalOverlay: {
     flex: 1,

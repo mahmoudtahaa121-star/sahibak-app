@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { storage } from '../lib/storage';
 import { supabase } from '../lib/supabase';
+import { logger } from '../utils/logger';
 
 export function useArea() {
   const [selectedArea, setSelectedAreaState] = useState<string>(
@@ -34,7 +35,7 @@ export function useArea() {
           }
         }
       } catch (err) {
-        console.error('Unexpected error:', err);
+        logger.error('Error fetching areas', { error: err });
       } // Will use default area
     };
 

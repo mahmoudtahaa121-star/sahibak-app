@@ -16,6 +16,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { isValidEgyptianPhone, isValidPassword, isValidEmail } from '../../utils/validation';
+import { logger } from '../../utils/logger';
 
 type Role = 'user' | 'provider';
 
@@ -86,7 +87,7 @@ export default function RegisterScreen() {
       });
 
       if (authError) {
-        console.error('Auth signup error:', authError);
+        logger.authError('signup', authError);
         Alert.alert('خطأ', `فشل التسجيل: ${authError.message}`);
         return;
       }
@@ -118,7 +119,7 @@ export default function RegisterScreen() {
           );
 
           if (profileError) {
-            console.error('Profile upsert error:', profileError);
+            logger.supabaseError('upsertProfile', profileError, { userId: authData?.user?.id });
 
             // Try insert instead if upsert fails
             const { error: insertError } = await supabase.from('profiles').insert({
@@ -133,7 +134,7 @@ export default function RegisterScreen() {
             });
 
             if (insertError) {
-              console.error('Profile insert error:', insertError);
+              logger.supabaseError('insertProfile', insertError, { userId: authData?.user?.id });
               Alert.alert('خطأ', `فشل إنشاء الملف الشخصي: ${insertError.message}`);
               return;
             }
@@ -146,7 +147,7 @@ export default function RegisterScreen() {
             },
           ]);
         } catch (error) {
-          console.error('Profile creation error:', error);
+          logger.error('Profile creation error', { error, userId: authData?.user?.id });
           Alert.alert('خطأ', 'حدث خطأ أثناء إنشاء الملف الشخصي');
           return;
         }

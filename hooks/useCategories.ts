@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Category } from '../types';
+import { logger } from '../utils/logger';
 
 export function useParentCategories() {
   return useQuery<Category[]>({
@@ -14,7 +15,7 @@ export function useParentCategories() {
         .eq('show_on_home', true)
         .order('sort_order');
       if (error) {
-        console.error('useParentCategories error:', error);
+        logger.supabaseError('fetchParentCategories', error);
         throw error;
       }
       return data ?? [];
@@ -34,7 +35,7 @@ export function useChildCategories(parentId: number | null) {
         .eq('is_active', true)
         .order('sort_order');
       if (error) {
-        console.error('useChildCategories error:', error);
+        logger.supabaseError('fetchChildCategories', error, { parentId });
         throw error;
       }
       return data ?? [];

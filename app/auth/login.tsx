@@ -18,6 +18,7 @@ import Constants from 'expo-constants';
 import { supabase } from '../../lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
+import { logger } from '../../utils/logger';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -100,7 +101,7 @@ export default function LoginScreen() {
         scheme: typeof scheme === 'string' ? scheme : 'sahibak',
       });
 
-      console.log('Google OAuth redirect URL:', redirectUrl);
+      logger.debug('Google OAuth redirect URL', { redirectUrl });
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -111,7 +112,7 @@ export default function LoginScreen() {
       });
 
       if (error) {
-        console.error('Google OAuth error:', error);
+        logger.authError('googleOAuth', error);
         Alert.alert('خطأ', `فشل تسجيل الدخول عبر جوجل: ${error.message}`);
         setLoading(false);
         return;
@@ -133,7 +134,7 @@ export default function LoginScreen() {
         }
       }
     } catch (error) {
-      console.error('Google login error:', error);
+      logger.authError('googleLogin', error);
       Alert.alert('خطأ', 'حدث خطأ غير متوقع');
     } finally {
       setLoading(false);

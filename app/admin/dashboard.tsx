@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Place, Offer, PlaceCategoryWithCategory, Profile } from '../../types';
+import { logger } from '../../utils/logger';
 import Skeleton from '../../components/ui/Skeleton';
 import PromptModal from '../../components/ui/PromptModal';
 
@@ -202,7 +203,7 @@ export default function AdminDashboardScreen() {
               await fetchStats();
               Alert.alert('تم', 'تمت الموافقة على المكان');
             } catch (error) {
-              console.error('Approve place error:', error);
+              logger.supabaseError('approvePlace', error, { placeId });
               Alert.alert('خطأ', 'فشل الموافقة');
             } finally {
               setRefreshing(false);
@@ -255,7 +256,7 @@ export default function AdminDashboardScreen() {
               await fetchStats();
               Alert.alert('تم', 'تم رفض المكان');
             } catch (error) {
-              console.error('Reject place error:', error);
+              logger.supabaseError('rejectPlace', error, { placeId: selectedPlaceId, adminNote: reason });
               Alert.alert('خطأ', 'فشل الرفض');
             } finally {
               setRefreshing(false);
@@ -297,7 +298,7 @@ export default function AdminDashboardScreen() {
               await fetchPendingOffers();
               Alert.alert('تم', 'تمت الموافقة على العرض');
             } catch (error) {
-              console.error('Approve offer error:', error);
+              logger.supabaseError('approveOffer', error, { offerId });
               Alert.alert('خطأ', 'فشل الموافقة');
             } finally {
               setRefreshing(false);
@@ -349,7 +350,7 @@ export default function AdminDashboardScreen() {
               await fetchPendingOffers();
               Alert.alert('تم', 'تم رفض العرض');
             } catch (error) {
-              console.error('Reject offer error:', error);
+              logger.supabaseError('rejectOffer', error, { offerId: selectedOfferId, adminNote: reason });
               Alert.alert('خطأ', 'فشل الرفض');
             } finally {
               setRefreshing(false);
@@ -384,7 +385,7 @@ export default function AdminDashboardScreen() {
               await fetchReports();
               Alert.alert('تم', 'تم مراجعة البلاغ');
             } catch (error) {
-              console.error('Mark report reviewed error:', error);
+              logger.supabaseError('markReportReviewed', error, { reportId });
               Alert.alert('خطأ', 'فشل المراجعة');
             } finally {
               setRefreshing(false);
@@ -424,7 +425,7 @@ export default function AdminDashboardScreen() {
               await fetchProviders();
               Alert.alert('تم', currentStatus ? 'تم إلغاء الحظر' : 'تم حظر المزود');
             } catch (error) {
-              console.error('Ban toggle error:', error);
+              logger.supabaseError('toggleBan', error, { providerId, currentStatus });
               Alert.alert('خطأ', 'فشل التحديث');
             } finally {
               setRefreshing(false);
@@ -484,7 +485,7 @@ export default function AdminDashboardScreen() {
               await fetchEditRequests();
               Alert.alert('تم', 'تمت الموافقة على التعديل');
             } catch (error) {
-              console.error('Approve edit request error:', error);
+              logger.supabaseError('approveEditRequest', error, { editRequestId: requestId });
               Alert.alert('خطأ', 'فشل الموافقة');
             } finally {
               setRefreshing(false);
@@ -534,7 +535,7 @@ export default function AdminDashboardScreen() {
               await fetchEditRequests();
               Alert.alert('تم', 'تم رفض التعديل');
             } catch (error) {
-              console.error('Reject edit request error:', error);
+              logger.supabaseError('rejectEditRequest', error, { editRequestId: selectedEditRequestId, adminNote: reason });
               Alert.alert('خطأ', 'فشل الرفض');
             } finally {
               setRefreshing(false);

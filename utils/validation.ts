@@ -120,6 +120,6 @@ export function isValidEmail(email: string): boolean {
  * @param text - The text to validate
  * @returns true if not empty, false otherwise
  */
-export function isNotEmpty(text: string): boolean {
+export function isNotEmpty(text: string | null | undefined): boolean {
   return text !== null && text !== undefined && text.trim().length > 0;
 }

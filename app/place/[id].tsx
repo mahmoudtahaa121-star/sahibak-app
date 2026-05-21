@@ -18,6 +18,7 @@ import * as Linking from 'expo-linking';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../../lib/supabase';
 import { Place } from '../../types';
+import { logger } from '../../utils/logger';
 import { useAuth } from '../../hooks/useAuth';
 import { usePlace } from '../../hooks/usePlace';
 import { useToggleFavorite } from '../../hooks/useFavorites';
@@ -78,7 +79,7 @@ export default function PlaceScreen() {
         queryClient.invalidateQueries({ queryKey: ['favorite', id, user?.id] });
       } catch (error) {
         // Revert on error
-        console.error('Favorite toggle error:', error);
+        logger.error('Favorite toggle error', { error, placeId: id, userId: user?.id });
         queryClient.setQueryData(['favorite', id, user?.id], !newFavoriteState);
         throw error;
       }
@@ -110,7 +111,7 @@ export default function PlaceScreen() {
           Alert.alert('غير متاح', 'مشاركة الروابط غير متاحة على هذا المنصة');
         }
       } catch (error) {
-        console.error('Share error:', error);
+        logger.error('Share error', { error, placeId: id });
         // Share failed - user cancelled or error occurred (silent is OK here)
       }
     }
@@ -140,7 +141,7 @@ export default function PlaceScreen() {
               await optimisticToggleFavorite(false);
               Alert.alert('تم', 'تم حذف المكان من المفضلة');
             } catch (error) {
-              console.error('Favorite removal error:', error);
+              logger.error('Favorite removal error', { error, placeId: id });
               Alert.alert('خطأ', 'حدث خطأ أثناء حذف المفضلة. يرجى المحاولة مرة أخرى');
             } finally {
               setFavoriteLoading(false);
@@ -156,7 +157,7 @@ export default function PlaceScreen() {
       await optimisticToggleFavorite(true);
       Alert.alert('تم', 'تمت إضافة المكان إلى المفضلة');
     } catch (error) {
-      console.error('Favorite addition error:', error);
+      logger.error('Favorite addition error', { error, placeId: id });
       Alert.alert('خطأ', 'حدث خطأ أثناء إضافة المفضلة. يرجى المحاولة مرة أخرى');
     } finally {
       setFavoriteLoading(false);
@@ -201,7 +202,7 @@ export default function PlaceScreen() {
 
                 Alert.alert('شكراً', 'تم إرسال بلاغك بنجاح');
               } catch (error) {
-                console.error('Report submission error:', error);
+                logger.error('Report submission error', { error, placeId: id, reason: text });
                 Alert.alert('خطأ', 'حدث خطأ أثناء إرسال البلاغ. يرجى المحاولة مرة أخرى');
               }
             },

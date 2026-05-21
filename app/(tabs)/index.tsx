@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { debounce } from '../../utils/debounce';
+import { logger } from '../../utils/logger';
 import {
   View,
   Text,
@@ -117,7 +118,7 @@ export default function HomeScreen() {
     try {
       await Promise.all([refetchNews(), refetchCategories(), refetchPlaces(), refetchOffers()]);
     } catch (error) {
-      console.error('Refresh error:', error);
+      logger.error('Refresh error', { error });
       Alert.alert('خطأ', 'حدث خطأ أثناء التحديث. يرجى المحاولة مرة أخرى');
     } finally {
       setRefreshing(false);

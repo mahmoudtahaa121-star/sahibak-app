@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Place } from '../types';
+import { logger } from '../utils/logger';
 
 export function usePlaces(area: string) {
   return useQuery<Place[]>({
@@ -25,7 +26,7 @@ export function usePlaces(area: string) {
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) {
-        console.error('usePlaces error:', error);
+        logger.supabaseError('fetchPlaces', error, { area });
         throw error;
       }
       return (data ?? []).map((p: any) => ({

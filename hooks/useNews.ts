@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { News } from '../types';
+import { logger } from '../utils/logger';
 
 export function useNews() {
   return useQuery<News[]>({
@@ -12,7 +13,7 @@ export function useNews() {
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) {
-        console.error('useNews error:', error);
+        logger.supabaseError('fetchNews', error);
         throw error;
       }
       return data ?? [];

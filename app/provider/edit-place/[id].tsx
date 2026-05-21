@@ -17,6 +17,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../lib/supabase';
 import { Category, Place, PlaceCategory, PlaceService } from '../../../types';
 import { isValidEgyptianPhone } from '../../../utils/validation';
+import { logger } from '../../../utils/logger';
 
 type Step = 1 | 2 | 3 | 4;
 type PlaceType = 'shop' | 'person';
@@ -352,7 +353,7 @@ export default function EditPlaceScreen() {
         ]);
       }
     } catch (error) {
-      console.error('Edit place error:', error);
+      logger.supabaseError('updatePlace', error, { placeId: id });
       Alert.alert('خطأ', 'فشل تحديث البيانات');
     } finally {
       setLoading(false);

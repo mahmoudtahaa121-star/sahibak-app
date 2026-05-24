@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,14 @@ export default function CategoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: category, isLoading: categoryLoading, refetch: refetchCategory } = useCategory(id);
+
+  useEffect(() => {
+    if (category) {
+      if (category.place_type_hint === 'shop') setFilter('shop');
+      else if (category.place_type_hint === 'person') setFilter('person');
+      else setFilter('all');
+    }
+  }, [category]);
   const {
     data: places,
     isLoading: placesLoading,
@@ -62,32 +70,34 @@ export default function CategoryScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
-          onPress={() => setFilter('all')}
-        >
-          <Text style={[styles.filterChipText, filter === 'all' && styles.filterChipTextActive]}>
-            الكل
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterChip, filter === 'shop' && styles.filterChipActive]}
-          onPress={() => setFilter('shop')}
-        >
-          <Text style={[styles.filterChipText, filter === 'shop' && styles.filterChipTextActive]}>
-            محلات
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterChip, filter === 'person' && styles.filterChipActive]}
-          onPress={() => setFilter('person')}
-        >
-          <Text style={[styles.filterChipText, filter === 'person' && styles.filterChipTextActive]}>
-            أشخاص
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {category?.place_type_hint === 'both' && (
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
+            style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
+            onPress={() => setFilter('all')}
+          >
+            <Text style={[styles.filterChipText, filter === 'all' && styles.filterChipTextActive]}>
+              الكل
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, filter === 'shop' && styles.filterChipActive]}
+            onPress={() => setFilter('shop')}
+          >
+            <Text style={[styles.filterChipText, filter === 'shop' && styles.filterChipTextActive]}>
+              محلات
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, filter === 'person' && styles.filterChipActive]}
+            onPress={() => setFilter('person')}
+          >
+            <Text style={[styles.filterChipText, filter === 'person' && styles.filterChipTextActive]}>
+              أشخاص
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.countContainer}>
         <Text style={styles.countText}>

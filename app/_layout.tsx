@@ -8,7 +8,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from '../lib/queryClient';
 import { useAuth } from '../hooks/useAuth';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { PerformanceMonitor } from '../components/ui/PerformanceMonitor';
+import { PerformanceMonitor } from '../components/ui/PerformanceMonitor'
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,10 +36,19 @@ function AuthGate() {
     }
   }, [user, loading, segments]);
 
+  if (loading) {
+    return (
+      <View style={styles.authLoadingContainer}>
+        <ActivityIndicator size="large" color="#1B4332" />
+      </View>
+    );
+  }
+
   return <Slot />;
 }
 
 export default function RootLayout() {
+  useFrameworkReady();
   const [fontsLoaded, fontError] = useFonts({
     Cairo_400Regular: require('../assets/fonts/Cairo-Regular.ttf'),
     Cairo_600SemiBold: require('../assets/fonts/Cairo-SemiBold.ttf'),
@@ -88,5 +98,10 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '700',
     color: '#1B4332',
+  },
+  authLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

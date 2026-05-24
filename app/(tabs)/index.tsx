@@ -8,7 +8,6 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  FlatList,
   Modal,
   Alert,
   ActivityIndicator,
@@ -27,6 +26,7 @@ import PlaceCard from '../../components/place/PlaceCard';
 import NewsCard from '../../components/news/NewsCard';
 import Skeleton from '../../components/ui/Skeleton';
 import { Category, Place, News } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -42,15 +42,14 @@ export default function HomeScreen() {
     data: placesData,
     isLoading: placesLoading,
     error: placesError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
     refetch: refetchPlaces,
   } = usePlaces(selectedArea);
   const { data: offers, refetch: refetchOffers } = useOffers(selectedArea);
   const [isConnected, setIsConnected] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [searchResults, setSearchResults] = useState<Place[]>([]);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showAreaModal, setShowAreaModal] = useState(false);
   const [showNewsModal, setShowNewsModal] = useState(false);
@@ -86,20 +85,40 @@ export default function HomeScreen() {
     [placesData],
   );
 
-  const filteredPlaces = useMemo(() => {
-    return (
-      allPlaces?.filter((place: Place) => {
-        if (searchQuery.length <= 1) return true;
-        const query = searchQuery.toLowerCase();
-        return (
-          place.name_ar.includes(query) ||
-          place.services?.some(
-            (s) => s.name_ar.includes(query) || s.description_ar?.includes(query)
-          )
-        );
-      }) || []
-    );
-  }, [allPlaces, searchQuery]);
+  const previewPlaces = useMemo(() => allPlaces.slice(0, 6), [allPlaces]);
+
+  // Server-side search
+  useEffect(() => {
+    if (searchQuery.length <= 1) {
+      setSearchResults([]);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearchLoading(true);
+
+    supabase
+      .from('places')
+      .select('*, place_services(*), place_categories(*)')
+      .eq('status', 'approved')
+      .eq('area', selectedArea)
+      .or(`name_ar.ilike.%${searchQuery}%`)
+      .limit(20)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setIsSearchLoading(false);
+        if (error) {
+          logger.error('Search error', { error });
+          setSearchResults([]);
+        } else {
+          setSearchResults(data as Place[]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchQuery, selectedArea]);
 
   const handleCategoryPress = useCallback((category: Category) => {
     setSelectedCategory(category);
@@ -191,18 +210,14 @@ export default function HomeScreen() {
 
         {isSearching ? (
           <View style={styles.searchResults}>
-            {filteredPlaces.length === 0 ? (
+            {isSearchLoading ? (
+              <ActivityIndicator size="large" color="#1B4332" style={{ paddingVertical: 20 }} />
+            ) : searchResults.length === 0 ? (
               <Text style={styles.noResults}>لا توجد نتائج</Text>
             ) : (
-              <FlatList
-                data={filteredPlaces}
-                keyExtractor={(item) => item.id}
-                removeClippedSubviews={true}
-                initialNumToRender={10}
-                renderItem={({ item }) => (
-                  <PlaceCard key={item.id} place={item} onPress={() => handlePlacePress(item.id)} />
-                )}
-              />
+              searchResults.map((place) => (
+                <PlaceCard key={place.id} place={place} onPress={() => handlePlacePress(place.id)} />
+              ))
             )}
           </View>
         ) : (
@@ -268,6 +283,9 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>أماكن قريبة منك</Text>
+                <TouchableOpacity onPress={() => router.push('/places/all')}>
+                  <Text style={styles.seeAll}>مشاهدة الكل ›</Text>
+                </TouchableOpacity>
               </View>
 
               {placesLoading ? (
@@ -289,38 +307,22 @@ export default function HomeScreen() {
                     <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
                   </TouchableOpacity>
                 </View>
-              ) : !allPlaces || allPlaces.length === 0 ? (
+              ) : !previewPlaces || previewPlaces.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyEmoji}>🏘</Text>
                   <Text style={styles.emptyTitle}>لا توجد خدمات بعد</Text>
                   <Text style={styles.emptySubtitle}>كن أول من يضيف خدمة في {selectedArea}</Text>
                 </View>
               ) : (
-                <FlatList
-                  data={filteredPlaces}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
+                <View style={styles.placesList}>
+                  {previewPlaces.map((place) => (
                     <PlaceCard
-                      place={item}
-                      onPress={() => handlePlacePress(item.id)}
+                      key={place.id}
+                      place={place}
+                      onPress={() => handlePlacePress(place.id)}
                     />
-                  )}
-                  contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 16 }}
-                  removeClippedSubviews={true}
-                  initialNumToRender={10}
-                  onEndReached={() => {
-                    if (hasNextPage && !isFetchingNextPage) {
-                      fetchNextPage();
-                    }
-                  }}
-                  ListFooterComponent={() =>
-                    isFetchingNextPage ? (
-                      <View style={styles.paginationLoading}>
-                        <ActivityIndicator size="small" color="#1B4332" />
-                      </View>
-                    ) : null
-                  }
-                />
+                  ))}
+                </View>
               )}
             </View>
           </>

@@ -97,12 +97,15 @@ export default function HomeScreen() {
     let cancelled = false;
     setIsSearchLoading(true);
 
+    // Sanitize search query to prevent PostgREST filter injection
+    const sanitized = searchQuery.replace(/[%(),.]/g, '');
+
     supabase
       .from('places')
       .select('*, place_services(*), place_categories(*)')
       .eq('status', 'approved')
       .eq('area', selectedArea)
-      .or(`name_ar.ilike.%${searchQuery}%`)
+      .or(`name_ar.ilike.%${sanitized}%`)
       .limit(20)
       .then(({ data, error }) => {
         if (cancelled) return;

@@ -5,11 +5,21 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Sentry from '@sentry/react-native';
 import { queryClient } from '../lib/queryClient';
 import { useAuth } from '../hooks/useAuth';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { PerformanceMonitor } from '../components/ui/PerformanceMonitor'
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.2,
+  });
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -78,7 +88,7 @@ export default function RootLayout() {
           ) : (
             <>
               <AuthGate />
-              <PerformanceMonitor />
+              {__DEV__ && <PerformanceMonitor />}
             </>
           )}
         </ErrorBoundary>

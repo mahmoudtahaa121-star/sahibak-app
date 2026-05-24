@@ -20,9 +20,16 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { logger } from '../../utils/logger';
 
+function sanitizeRedirect(path: unknown): string {
+  if (typeof path !== 'string') return '/';
+  if (path.startsWith('/') && !path.startsWith('//') && !path.includes('://')) return path;
+  return '/';
+}
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const safeRedirect = sanitizeRedirect(redirect);
   const scheme = Constants.expoConfig?.scheme ?? 'sahibak';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +41,7 @@ export default function LoginScreen() {
 
   const handleBack = () => {
     // Redirect to the intended page or home if not specified
-    const targetPath = redirect || '/';
+    const targetPath = safeRedirect;
     router.replace(targetPath);
   };
 
@@ -85,7 +92,7 @@ export default function LoginScreen() {
           data.user.email || '',
           data.user.user_metadata?.full_name
         );
-        router.replace(redirect || '/');
+        router.replace(safeRedirect);
       }
     } catch (error) {
       Alert.alert('خطأ', 'حدث خطأ غير متوقع');
@@ -129,7 +136,7 @@ export default function LoginScreen() {
               sessionData.session.user.email || '',
               sessionData.session.user.user_metadata?.full_name
             );
-            router.replace(redirect || '/');
+            router.replace(safeRedirect);
           }
         }
       }
@@ -148,7 +155,7 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}>
         <View style={styles.header}>
-          {redirect && (
+          {safeRedirect !== '/' && (
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
               <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
             </TouchableOpacity>
